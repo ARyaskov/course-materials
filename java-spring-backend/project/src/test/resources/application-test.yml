@@ -1,0 +1,21 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+
+# Datasource предоставляется Testcontainers через @ServiceConnection
+app:
+  jwt:
+    secret: test-only-secret-please-change-me-32-bytes-minimum-key
+    expiration-hours: 1
+
+notifications:
+  base-url: http://localhost:9999
+  connect-timeout-ms: 1000
+  read-timeout-ms: 1000
+  max-attempts: 1
