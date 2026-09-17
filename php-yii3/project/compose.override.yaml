@@ -1,0 +1,42 @@
+# Применяется автоматически при `docker compose up` в разработке.
+# Собран из фрагментов уроков 17.5, 18.4 и 19.3.
+services:
+  app:
+    build:
+      target: vendor          # образ с dev-зависимостями
+    environment:
+      YII_ENV: dev
+      YII_DEBUG: "1"
+    volumes:
+      - ./src:/app/src        # правки видны без пересборки
+      - ./config:/app/config
+      - ./migrations:/app/migrations
+      - ./tests:/app/tests
+
+  nginx:
+    ports:
+      - "8080:80"             # доступен снаружи, не только с localhost
+
+  queue:
+    deploy:
+      replicas: 1             # один воркер удобнее отлаживать
+
+  db:
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: helpdesk_test_0,helpdesk_test_1,helpdesk_test_2
+    volumes:
+      - ./docker/postgres/init-multiple-db.sh:/docker-entrypoint-initdb.d/10-multiple-db.sh:ro
+    # тестовой базе долговечность не нужна — эти флаги ускоряют прогон в разы
+    command:
+      - postgres
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+
+  directory-stub:
+    image: mockserver/mockserver:latest
+    ports:
+      - "1080:1080"           # заглушка внешнего справочника сотрудников

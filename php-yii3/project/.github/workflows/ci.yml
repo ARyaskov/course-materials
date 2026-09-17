@@ -1,0 +1,76 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: helpdesk_test
+          POSTGRES_USER: helpdesk
+          POSTGRES_PASSWORD: helpdesk
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
+        ports: ['5432:5432']
+      redis:
+        image: redis:8-alpine
+        options: --health-cmd "redis-cli ping" --health-interval 5s
+        ports: ['6379:6379']
+
+    env:
+      TEST_DB_DSN: 'pgsql:host=127.0.0.1;port=5432;dbname=helpdesk_test'
+      REDIS_URI: 'redis://127.0.0.1:6379/0'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, intl, mbstring, redis
+          coverage: xdebug
+
+      - name: Зависимости
+        run: |
+          composer validate --strict
+          composer install --no-progress --prefer-dist
+
+      # дешёвое первым: провал виден за секунды
+      - name: Unit-тесты
+        run: ./vendor/bin/phpunit --testsuite=unit
+
+      - name: Статический анализ
+        run: ./vendor/bin/psalm --no-cache
+
+      - name: Стиль кода
+        run: ./vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: Миграции применяются и откатываются
+        run: |
+          php yii migrate:up --interactive=0
+          php yii migrate:down --limit=5 --interactive=0
+          php yii migrate:up --interactive=0
+
+      - name: Contract и functional
+        run: ./vendor/bin/phpunit --testsuite=contract,functional
+
+      - name: Сборка образа
+        run: |
+          docker build -f docker/php/Dockerfile \
+            --build-arg APP_VERSION="${GITHUB_SHA::7}" \
+            -t helpdesk-api:"${GITHUB_SHA::7}" .
+
+      # проверки самого образа: то, что видно только после сборки
+      - name: Образ собран верно
+        run: |
+          docker run --rm helpdesk-api:"${GITHUB_SHA::7}" \
+            php -m | grep -qE 'pdo_pgsql' || exit 1
+          docker run --rm helpdesk-api:"${GITHUB_SHA::7}" \
+            php -r '$p = require "/app/config/.merge-plan.php";
+                    exit(count($p) > 0 ? 0 : 1);'
+          docker run --rm helpdesk-api:"${GITHUB_SHA::7}" \
+            sh -c 'test ! -f vendor/bin/phpunit' || exit 1

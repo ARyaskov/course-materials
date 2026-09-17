@@ -1,0 +1,73 @@
+{
+    "name": "stepik/helpdesk",
+    "type": "project",
+    "description": "HelpDesk — сквозной проект курса «PHP 8.5 и Laravel 13 для backend-разработчика» (главы 1–19)",
+    "keywords": [
+        "laravel",
+        "api",
+        "helpdesk",
+        "stepik"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "laravel/framework": "^13.17",
+        "laravel/sanctum": "^4.3",
+        "laravel/tinker": "^3.0",
+        "predis/predis": "^3.2"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.24",
+        "larastan/larastan": "^3.11",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "pestphp/pest": "^4.7",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan package:discover --ansi"
+        ],
+        "post-create-project-cmd": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate --ansi"
+        ],
+        "lint": "pint --test",
+        "fix": "pint",
+        "stan": "phpstan analyse --memory-limit=512M",
+        "test": "pest --testsuite=Smoke",
+        "check": [
+            "@stan",
+            "@test"
+        ],
+        "test:all": "pest"
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

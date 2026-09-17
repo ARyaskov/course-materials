@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+config/params-local.php
+config/.merge-plan.php
+runtime/
+storage/
+vendor/
+.php-cs-fixer.cache
+.phpunit.result.cache

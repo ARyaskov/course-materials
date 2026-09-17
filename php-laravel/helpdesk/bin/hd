@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+# bin/hd — обёртка над docker compose
+set -e
+
+case "$1" in
+  up)      docker compose up -d --build ;;
+  down)    docker compose down ;;
+  sh)      docker compose exec app sh ;;
+  art)     shift; docker compose exec app php artisan "$@" ;;
+  test)    shift; docker compose exec app php artisan test "$@" ;;
+  logs)    shift; docker compose logs -f "${1:-app}" ;;
+  psql)    docker compose exec db psql -U helpdesk -d helpdesk ;;
+  redis)   docker compose exec redis redis-cli ;;
+  fresh)   docker compose exec app php artisan migrate:fresh --seed ;;
+  restart) docker compose restart queue scheduler ;;
+  *)       echo "Использование: bin/hd {up|down|sh|art|test|logs|psql|redis|fresh|restart}" ;;
+esac

@@ -1,0 +1,12 @@
+# compose.override.yaml
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"

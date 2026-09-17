@@ -1,0 +1,135 @@
+# compose.yaml
+name: helpdesk
+
+services:
+  app:
+    build:
+      context: .
+      target: dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor          # анонимный том: не синхронизируем с хостом
+    environment:
+      APP_ENV: local
+      DB_HOST: db
+      REDIS_HOST: redis
+      PHP_IDE_CONFIG: serverName=helpdesk
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [backend]
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/up"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks: [backend]
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: helpdesk
+      POSTGRES_USER: helpdesk
+      POSTGRES_PASSWORD: secret
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"                   # для подключения из среды разработки
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helpdesk -d helpdesk"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks: [backend]
+
+  redis:
+    image: redis:8-alpine
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [backend]
+
+  queue:
+    build:
+      context: .
+      target: dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    command: php artisan queue:work redis --queue=high,default,low --tries=3 --max-time=3600 --sleep=1
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [backend]
+
+  scheduler:
+    build:
+      context: .
+      target: dev
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [backend]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"                   # веб-интерфейс
+      - "1025:1025"                   # SMTP
+    networks: [backend]
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  backend:
+    driver: bridge

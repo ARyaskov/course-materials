@@ -1,0 +1,15 @@
+# phpstan.neon
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - app
+        - database
+        - routes
+    excludePaths:
+        - app/Console/Kernel.php
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+    treatPhpDocTypesAsCertain: false

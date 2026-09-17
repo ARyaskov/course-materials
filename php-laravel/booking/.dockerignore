@@ -1,0 +1,24 @@
+# .dockerignore
+.git
+.github
+.idea
+.vscode
+node_modules
+vendor
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/private/*
+storage/app/public/*
+bootstrap/cache/*
+tests
+.env
+.env.*
+!.env.example
+*.md
+docker-compose*.yml
+compose*.yaml
+.phpunit.cache
+.phpstan.cache
+coverage

@@ -1,0 +1,12 @@
+/vendor
+/public/storage
+/storage/app/private
+/storage/app/public
+/storage/framework/cache
+/storage/framework/sessions
+/storage/logs
+.env
+.phpunit.cache
+.phpunit.result.cache
+/pgdata
+/redisdata

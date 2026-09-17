@@ -1,0 +1,71 @@
+# compose.yaml
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      PHP_IDE_CONFIG: serverName=booking
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  nginx:
+    image: nginx:1.29-alpine
+    ports: ['8080:80']
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on: [app]
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: booking
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-test-db.sh:/docker-entrypoint-initdb.d/10-test-db.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U booking']
+      interval: 5s
+      retries: 10
+    ports: ['54329:5432']
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      retries: 10
+
+  queue:
+    build: { context: ., target: dev }
+    command: php artisan queue:work redis --queue=notifications,default --tries=3 --max-time=3600
+    volumes: ['.:/var/www/html']
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  scheduler:
+    build: { context: ., target: dev }
+    command: php artisan schedule:work
+    volumes: ['.:/var/www/html']
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ['8025:8025']
+
+volumes:
+  pgdata:
+  redisdata:

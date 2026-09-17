@@ -1,0 +1,116 @@
+# compose.prod.yaml
+name: helpdesk
+
+x-app: &app
+  image: registry.local/helpdesk:${APP_VERSION:-latest}
+  restart: unless-stopped
+  env_file: [.env.production]
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  networks: [backend]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  app:
+    <<: *app
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 30s
+    deploy:
+      replicas: 2
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+      - certbot-certs:/etc/letsencrypt:ro
+    depends_on: [app]
+    networks: [backend, frontend]
+
+  # быстрые задачи: уведомления
+  queue-high:
+    <<: *app
+    command: >
+      php artisan queue:work redis
+      --queue=high,notifications
+      --tries=3 --timeout=30 --max-time=3600 --memory=192 --sleep=1
+    deploy:
+      replicas: 4
+      resources:
+        limits: { memory: 256M }
+
+  # интеграции: дольше, больше попыток
+  queue-integrations:
+    <<: *app
+    command: >
+      php artisan queue:work redis
+      --queue=integrations
+      --tries=5 --timeout=60 --max-time=3600 --memory=256
+    deploy:
+      replicas: 2
+
+  # долгие выгрузки: большой таймаут, мало задач на процесс
+  queue-exports:
+    <<: *app
+    command: >
+      php artisan queue:work redis
+      --queue=exports
+      --tries=2 --timeout=900 --max-jobs=20 --memory=512
+    deploy:
+      resources:
+        limits: { memory: 640M }
+
+  # обслуживание: низкий приоритет
+  queue-maintenance:
+    <<: *app
+    command: >
+      php artisan queue:work redis
+      --queue=maintenance,low
+      --tries=3 --timeout=120 --max-time=3600 --memory=256
+
+  # планировщик — строго один
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+    deploy:
+      replicas: 1
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    env_file: [.env.production]
+    volumes: ["/srv/helpdesk/pgdata:/var/lib/postgresql/data"]
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 10
+    networks: [backend]
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: >
+      redis-server --appendonly yes --appendfsync everysec
+      --maxmemory 512mb --maxmemory-policy noeviction
+    volumes: ["/srv/helpdesk/redisdata:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+    networks: [backend]
+
+volumes:
+  certbot-certs:
+
+networks:
+  frontend:
+  backend:
+    internal: true
