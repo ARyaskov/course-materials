@@ -1,0 +1,61 @@
+# Сообщения по умолчанию (английский). Ключи не дублируют текст: они описывают смысл.
+index.title=Status pages
+index.subtitle=Public availability dashboards served by Beacon
+
+status.title=Status
+status.service=Service
+status.state=State
+status.uptime=Uptime, {0} days
+status.operational=Operational
+status.degraded=Degraded
+status.down=Outage
+status.incidents=Incident history
+status.live.connecting=connecting to live updates...
+status.live.connected=live
+status.live.offline=live updates unavailable
+
+unit.ms=ms
+
+incidents.title=Incidents
+incidents.empty=No incidents recorded
+incidents.opened=opened
+incidents.resolved=resolved
+
+footer.generated=Served by Beacon
+
+admin.login.title=Beacon admin
+admin.login.email=Email
+admin.login.password=Password
+admin.login.submit=Sign in
+
+admin.services.title=Services
+admin.services.new=New service
+admin.services.key=Key
+admin.services.name=Name
+admin.services.description=Description
+admin.services.create=Create service
+
+admin.checks.title=Checks
+admin.checks.new=New check
+admin.checks.name=Name
+admin.checks.status=Expected status
+admin.checks.body=Body contains
+admin.checks.timeout=Timeout, ms
+admin.checks.interval=Interval, seconds
+admin.checks.create=Create check
+admin.checks.delete=Delete
+admin.checks.import=Bulk import
+admin.checks.import.hint=Send a CSV file with columns service_key,name,method,url,expected_status,timeout_ms,interval_seconds
+
+admin.incidents.title=Incidents
+admin.incidents.new=Open incident
+admin.incidents.header=Title
+admin.incidents.severity=Severity
+admin.incidents.open=Open
+admin.incidents.resolve=Resolve
+
+admin.public.page=Public page
+
+error.login.invalid=Wrong email or password
+error.url.scheme=URL must start with http:// or https://
+error.timeout.tooLarge=Timeout must be smaller than the check interval

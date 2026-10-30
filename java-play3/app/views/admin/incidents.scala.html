@@ -1,0 +1,33 @@
+@import play.mvc.Http.Request
+@(slug: String, incidents: Seq[Incident], form: Form[beacon.forms.IncidentForm])(implicit request: Request, messages: play.i18n.Messages)
+
+@main(messages("admin.incidents.title")) {
+    <h1>@messages("admin.incidents.title") — @slug</h1>
+
+    <ul class="incidents">
+    @for(incident <- incidents) {
+        <li class="incident @if(incident.isOpen()){open}else{resolved}">
+            <span class="severity">@incident.severity().name()</span>
+            <strong>@incident.title()</strong>
+            <span class="muted">@incident.openedAt()</span>
+            @if(incident.isOpen()) {
+                @helper.form(action = controllers.admin.routes.IncidentsAdminController.resolve(slug, incident.id())) {
+                    @helper.CSRF.formField
+                    <button type="submit">@messages("admin.incidents.resolve")</button>
+                }
+            }
+        </li>
+    }
+    </ul>
+
+    <h2>@messages("admin.incidents.new")</h2>
+    @helper.form(action = controllers.admin.routes.IncidentsAdminController.open(slug)) {
+        @helper.CSRF.formField
+        @helper.inputText(form("serviceKey"), Symbol("_label") -> messages("admin.services.key"))
+        @helper.inputText(form("title"), Symbol("_label") -> messages("admin.incidents.header"))
+        @helper.inputText(form("severity"), Symbol("_label") -> messages("admin.incidents.severity"))
+        <button type="submit">@messages("admin.incidents.open")</button>
+    }
+
+    <p><a href="@controllers.admin.routes.ServicesAdminController.list(slug)">&larr; @messages("admin.services.title")</a></p>
+}

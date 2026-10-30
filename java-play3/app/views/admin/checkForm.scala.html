@@ -1,0 +1,31 @@
+@import play.mvc.Http.Request
+@(slug: String, services: Seq[MonitoredService], form: Form[beacon.forms.CheckForm])(implicit request: Request, messages: play.i18n.Messages)
+
+@main(messages("admin.checks.new")) {
+    <h1>@messages("admin.checks.new")</h1>
+
+    @if(form.hasGlobalErrors) {
+        @for(error <- form.globalErrors.asScala) {
+            <div class="error">@messages(error.message)</div>
+        }
+    }
+
+    @helper.form(action = controllers.admin.routes.ChecksAdminController.create(slug)) {
+        @helper.CSRF.formField
+        @helper.select(
+            form("serviceKey"),
+            helper.options(services.map(s => s.key().value() -> s.name()).toMap),
+            Symbol("_label") -> messages("admin.services.key")
+        )
+        @helper.inputText(form("name"), Symbol("_label") -> messages("admin.checks.name"))
+        @helper.inputText(form("method"), Symbol("_label") -> "HTTP method")
+        @helper.inputText(form("url"), Symbol("_label") -> "URL")
+        @helper.inputText(form("expectedStatus"), Symbol("_label") -> messages("admin.checks.status"))
+        @helper.inputText(form("bodyContains"), Symbol("_label") -> messages("admin.checks.body"))
+        @helper.inputText(form("timeoutMs"), Symbol("_label") -> messages("admin.checks.timeout"))
+        @helper.inputText(form("intervalSeconds"), Symbol("_label") -> messages("admin.checks.interval"))
+        <button type="submit">@messages("admin.checks.create")</button>
+    }
+
+    <p><a href="@controllers.admin.routes.ServicesAdminController.list(slug)">&larr; @messages("admin.services.title")</a></p>
+}

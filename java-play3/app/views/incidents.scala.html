@@ -1,0 +1,35 @@
+@import play.mvc.Http.Request
+@(org: Organization, incidents: Seq[Incident], page: Int)(implicit request: Request, messages: play.i18n.Messages)
+
+@main(org.name() + " — " + messages("incidents.title")) {
+    <h1>@messages("incidents.title")</h1>
+
+    @if(incidents.isEmpty) {
+        <p class="muted">@messages("incidents.empty")</p>
+    }
+
+    <ul class="incidents">
+    @for(incident <- incidents) {
+        <li class="incident @if(incident.isOpen()){open}else{resolved}">
+            <span class="severity">@incident.severity().name()</span>
+            <strong>@incident.title()</strong>
+            <div class="muted">
+                @messages("incidents.opened"): @incident.openedAt()
+                @if(!incident.isOpen()) {
+                    · @messages("incidents.resolved"): @incident.resolvedAt()
+                }
+            </div>
+        </li>
+    }
+    </ul>
+
+    <nav class="pagination">
+        @if(page > 1) {
+            <a href="@controllers.site.routes.StatusPageController.incidents(org.slug(), page - 1)">&larr;</a>
+        }
+        <span>@page</span>
+        @if(incidents.size >= 20) {
+            <a href="@controllers.site.routes.StatusPageController.incidents(org.slug(), page + 1)">&rarr;</a>
+        }
+    </nav>
+}

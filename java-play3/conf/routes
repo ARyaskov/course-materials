@@ -1,0 +1,15 @@
+# Корневой файл маршрутов Beacon.
+# Порядок важен: более специфичные префиксы объявлены раньше общего "/".
+
+# --- эксплуатация ---------------------------------------------------------
+GET     /health                     controllers.OpsController.health()
+GET     /ready                      controllers.OpsController.ready()
+GET     /metrics                    controllers.OpsController.metrics()
+
+# --- подключаемые наборы маршрутов ----------------------------------------
+->      /api/v1                     api.Routes
+->      /admin                      admin.Routes
+->      /                           site.Routes
+
+# --- статика --------------------------------------------------------------
+GET     /assets/*file               controllers.Assets.versioned(path = "/public", file: Asset)

@@ -1,0 +1,21 @@
+@import play.mvc.Http.Request
+@(form: Form[beacon.forms.LoginForm])(implicit request: Request, messages: play.i18n.Messages)
+
+@main(messages("admin.login.title")) {
+    <h1>@messages("admin.login.title")</h1>
+
+    @if(form.hasGlobalErrors) {
+        @for(error <- form.globalErrors.asScala) {
+            <div class="error">@messages(error.message)</div>
+        }
+    }
+
+    @helper.form(action = controllers.admin.routes.AuthController.login(), Symbol("class") -> "form") {
+        @helper.CSRF.formField
+        @helper.inputText(form("email"), Symbol("_label") -> messages("admin.login.email"))
+        @helper.inputPassword(form("password"), Symbol("_label") -> messages("admin.login.password"))
+        <button type="submit">@messages("admin.login.submit")</button>
+    }
+
+    <p class="muted">demo: admin@@demo.local / beacon-admin</p>
+}

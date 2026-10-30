@@ -1,0 +1,17 @@
+@(status: Int, message: String, requestId: String)
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Beacon — ошибка @status</title>
+    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/beacon.css")">
+</head>
+<body>
+<main class="error-page">
+    <h1>@status</h1>
+    <p>@message</p>
+    <p class="muted">request id: <code>@requestId</code></p>
+    <p><a href="/">На главную</a></p>
+</main>
+</body>
+</html>

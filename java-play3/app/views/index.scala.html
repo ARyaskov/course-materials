@@ -1,0 +1,15 @@
+@import play.mvc.Http.Request
+@(orgs: Seq[Organization])(implicit request: Request, messages: play.i18n.Messages)
+
+@main(messages("index.title")) {
+    <h1>@messages("index.title")</h1>
+    <p>@messages("index.subtitle")</p>
+    <ul class="org-list">
+    @for(org <- orgs) {
+        <li>
+            <a href="@controllers.site.routes.StatusPageController.show(org.slug())">@org.name()</a>
+            <code>/s/@org.slug()</code>
+        </li>
+    }
+    </ul>
+}

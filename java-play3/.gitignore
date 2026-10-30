@@ -1,0 +1,34 @@
+# Build outputs and runtime data
+target/
+logs/
+data/
+dist/
+out/
+RUNNING_PID
+*.class
+*.jar
+*.war
+*.log
+*.log.*
+project/project/
+project/target/
+
+# Local editor and OS files
+.idea/
+.bsp/
+.bloop/
+.metals/
+.vscode/
+.DS_Store
+
+# Local credentials (publish only explicit example files)
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore

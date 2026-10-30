@@ -1,0 +1,57 @@
+@import play.mvc.Http.Request
+@(slug: String, services: Seq[MonitoredService], checks: Seq[Check], form: Form[beacon.forms.ServiceForm])(implicit request: Request, messages: play.i18n.Messages)
+
+@main(messages("admin.services.title")) {
+    <h1>@messages("admin.services.title") — @slug</h1>
+
+    <nav class="admin-nav">
+        <a href="@controllers.admin.routes.ChecksAdminController.form(slug)">@messages("admin.checks.new")</a>
+        <a href="@controllers.admin.routes.IncidentsAdminController.list(slug)">@messages("admin.incidents.title")</a>
+        <a href="@controllers.site.routes.StatusPageController.show(slug)">@messages("admin.public.page")</a>
+    </nav>
+
+    <table class="services">
+        <thead>
+        <tr><th>@messages("admin.services.key")</th><th>@messages("admin.services.name")</th><th>@messages("admin.checks.title")</th></tr>
+        </thead>
+        <tbody>
+        @for(service <- services) {
+            <tr>
+                <td><code>@service.key().value()</code></td>
+                <td>@service.name()</td>
+                <td>
+                    <ul class="checks">
+                    @for(check <- checks.filter(c => c.serviceId() == service.id())) {
+                        <li>
+                            <span>@check.name()</span>
+                            <code>@check.method() @check.url()</code>
+                            @helper.form(action = controllers.admin.routes.ChecksAdminController.delete(slug, check.id())) {
+                                @helper.CSRF.formField
+                                <button type="submit" class="danger">@messages("admin.checks.delete")</button>
+                            }
+                        </li>
+                    }
+                    </ul>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <h2>@messages("admin.services.new")</h2>
+    @helper.form(action = controllers.admin.routes.ServicesAdminController.create(slug)) {
+        @helper.CSRF.formField
+        @helper.inputText(form("key"), Symbol("_label") -> messages("admin.services.key"))
+        @helper.inputText(form("name"), Symbol("_label") -> messages("admin.services.name"))
+        @helper.inputText(form("description"), Symbol("_label") -> messages("admin.services.description"))
+        <button type="submit">@messages("admin.services.create")</button>
+    }
+
+    <h2>@messages("admin.checks.import")</h2>
+    <p class="muted">@messages("admin.checks.import.hint")</p>
+    <pre class="snippet">curl -X POST \
+  -H "Content-Type: text/csv" \
+  -H "Csrf-Token: nocheck" \
+  --data-binary @@checks.csv \
+  "@controllers.admin.routes.ChecksAdminController.importCsv(slug).url"</pre>
+}

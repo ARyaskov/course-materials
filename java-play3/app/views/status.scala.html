@@ -1,0 +1,60 @@
+@import play.mvc.Http.Request
+@(org: Organization, services: Seq[ServiceStatus], historyDays: Int)(implicit request: Request, messages: play.i18n.Messages)
+
+@statusLabel(outcome: ProbeOutcome) = @{
+    if (outcome == ProbeOutcome.DOWN) messages("status.down")
+    else if (outcome == ProbeOutcome.DEGRADED) messages("status.degraded")
+    else messages("status.operational")
+}
+
+@main(org.name() + " — " + messages("status.title")) {
+    <h1>@org.name()</h1>
+
+    <div id="overall" class="overall">
+        @if(services.exists(s => s.outcome() == ProbeOutcome.DOWN)) {
+            <span class="badge down">@messages("status.down")</span>
+        } else {
+            @if(services.exists(s => s.outcome() == ProbeOutcome.DEGRADED)) {
+                <span class="badge degraded">@messages("status.degraded")</span>
+            } else {
+                <span class="badge up">@messages("status.operational")</span>
+            }
+        }
+    </div>
+
+    <table class="services">
+        <thead>
+        <tr>
+            <th>@messages("status.service")</th>
+            <th>@messages("status.state")</th>
+            <th>@messages("status.uptime", historyDays)</th>
+            <th>p95</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for(status <- services) {
+            <tr data-service="@status.service().key().value()">
+                <td>
+                    <strong>@status.service().name()</strong>
+                    <div class="muted">@status.service().description()</div>
+                </td>
+                <td class="state">@statusLabel(status.outcome())</td>
+                <td>@("%.3f".format(status.uptimeRatio() * 100))%</td>
+                <td class="p95">@status.p95DurationMs() @messages("unit.ms")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <p class="links">
+        <a href="@controllers.site.routes.StatusPageController.incidents(org.slug(), 1)">@messages("status.incidents")</a>
+        <a href="@controllers.site.routes.StatusPageController.exportCsv(org.slug(), TimeRange.lastDay())">CSV</a>
+        <a href="/api/v1/status/@org.slug()">JSON</a>
+    </p>
+
+    <div id="live" class="live" data-org="@org.slug()">
+        <span class="muted">@messages("status.live.connecting")</span>
+    </div>
+
+    <script src="@routes.Assets.versioned("javascripts/beacon.js")"></script>
+}

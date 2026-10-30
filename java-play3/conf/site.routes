@@ -1,0 +1,13 @@
+# Публичная часть: статус-страницы организаций, живые обновления.
+
+GET     /                           controllers.site.StatusPageController.index(request: Request)
+GET     /s/:slug                    controllers.site.StatusPageController.show(slug: String, request: Request)
+GET     /s/:slug/incidents          controllers.site.StatusPageController.incidents(slug: String, page: Int ?= 1, request: Request)
+GET     /s/:slug/export.csv         controllers.site.StatusPageController.exportCsv(slug: String, range: TimeRange ?= beacon.domain.TimeRange.lastDay())
+
+# Живые обновления: SSE для страницы и WebSocket для дашборда.
+GET     /s/:slug/live               controllers.site.LiveController.stream(slug: String, request: Request)
+GET     /s/:slug/socket             controllers.site.LiveController.socket(slug: String)
+
+# Переключение языка интерфейса.
+GET     /lang/:code                 controllers.site.StatusPageController.switchLang(code: String, request: Request)

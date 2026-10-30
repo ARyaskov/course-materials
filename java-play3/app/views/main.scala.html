@@ -1,0 +1,33 @@
+@import play.mvc.Http.Request
+@(title: String)(content: Html)(implicit request: Request, messages: play.i18n.Messages)
+
+<!DOCTYPE html>
+<html lang="@messages.lang().code()">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@title</title>
+    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/beacon.css")">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="@controllers.site.routes.StatusPageController.index()">Beacon</a>
+    <nav>
+        <a href="/lang/ru">RU</a>
+        <a href="/lang/en">EN</a>
+    </nav>
+</header>
+
+@for((name, value) <- request.flash().asScala().data) {
+    <div class="flash flash-@name">@value</div>
+}
+
+<main>
+@content
+</main>
+
+<footer>
+    <span>@messages("footer.generated")</span>
+</footer>
+</body>
+</html>

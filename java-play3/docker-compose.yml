@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: beacon
+      POSTGRES_USER: beacon
+      POSTGRES_PASSWORD: beacon
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beacon -d beacon"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  beacon:
+    image: beacon:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APPLICATION_SECRET: "replace-me-with-32-plus-random-characters"
+      BEACON_DB_URL: "jdbc:postgresql://postgres:5432/beacon"
+      BEACON_DB_USER: beacon
+      BEACON_DB_PASSWORD: beacon
+      BEACON_PUBLIC_HOST: "localhost:9000"
+      EVOLUTIONS_AUTO_APPLY: "true"
+      JAVA_OPTS: "-Dconfig.resource=application.prod.conf -Dpidfile.path=/dev/null -XX:MaxRAMPercentage=75"
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:9000/ready || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6

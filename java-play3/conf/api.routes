@@ -1,0 +1,22 @@
+# JSON API v1. Аутентификация — заголовок Authorization: Bearer <api-key>.
+# CSRF-фильтр к API не применяется: модификатор nocsrf выключает его для маршрута.
+
+GET     /status/:slug                       controllers.api.StatusApiController.status(slug: String)
+
+GET     /orgs/:slug/services                controllers.api.ServicesApiController.list(slug: String, request: Request)
++ nocsrf
+POST    /orgs/:slug/services                controllers.api.ServicesApiController.create(slug: String, request: Request)
+GET     /orgs/:slug/services/:key           controllers.api.ServicesApiController.show(slug: String, key: ServiceKey, request: Request)
+
+GET     /orgs/:slug/checks                  controllers.api.ChecksApiController.list(slug: String, request: Request)
++ nocsrf
+POST    /orgs/:slug/checks                  controllers.api.ChecksApiController.create(slug: String, request: Request)
++ nocsrf
+DELETE  /orgs/:slug/checks/:id              controllers.api.ChecksApiController.delete(slug: String, id: Long, request: Request)
+GET     /orgs/:slug/checks/:id/results      controllers.api.ChecksApiController.results(slug: String, id: Long, range: TimeRange ?= beacon.domain.TimeRange.lastDay(), request: Request)
+
+GET     /orgs/:slug/incidents               controllers.api.IncidentsApiController.list(slug: String, state: String ?= "open", request: Request)
++ nocsrf
+POST    /orgs/:slug/incidents               controllers.api.IncidentsApiController.open(slug: String, request: Request)
++ nocsrf
+POST    /orgs/:slug/incidents/:id/resolve   controllers.api.IncidentsApiController.resolve(slug: String, id: Long, request: Request)

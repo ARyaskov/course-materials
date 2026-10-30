@@ -1,0 +1,17 @@
+# Админка: HTML-формы, сессия Play, CSRF включён.
+
+GET     /                                   controllers.admin.AuthController.loginForm(request: Request)
+POST    /login                              controllers.admin.AuthController.login(request: Request)
+POST    /logout                             controllers.admin.AuthController.logout(request: Request)
+
+GET     /orgs/:slug/services                controllers.admin.ServicesAdminController.list(slug: String, request: Request)
+POST    /orgs/:slug/services                controllers.admin.ServicesAdminController.create(slug: String, request: Request)
+
+GET     /orgs/:slug/checks/new              controllers.admin.ChecksAdminController.form(slug: String, request: Request)
+POST    /orgs/:slug/checks                  controllers.admin.ChecksAdminController.create(slug: String, request: Request)
+POST    /orgs/:slug/checks/:id/delete       controllers.admin.ChecksAdminController.delete(slug: String, id: Long, request: Request)
+POST    /orgs/:slug/checks/import           controllers.admin.ChecksAdminController.importCsv(slug: String, request: Request)
+
+GET     /orgs/:slug/incidents               controllers.admin.IncidentsAdminController.list(slug: String, request: Request)
+POST    /orgs/:slug/incidents               controllers.admin.IncidentsAdminController.open(slug: String, request: Request)
+POST    /orgs/:slug/incidents/:id/resolve   controllers.admin.IncidentsAdminController.resolve(slug: String, id: Long, request: Request)

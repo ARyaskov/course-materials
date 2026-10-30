@@ -1,0 +1,11 @@
+@(org: String, service: String, title: String, openedAt: java.time.Instant)
+Инцидент в организации @org
+
+Сервис: @service
+Заголовок: @title
+Открыт: @openedAt
+
+Текущий статус: https://beacon.example/s/@org
+
+Это письмо сформировано шаблоном Twirl в формате text/plain:
+экранирование HTML здесь не выполняется, потому что формат другой.
