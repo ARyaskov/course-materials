@@ -1,0 +1,78 @@
+# Локальный стенд Meterway: PostgreSQL, Redis, Kafka, сбор трасс.
+# Приложение запускается отдельно (./gradlew run) и ходит на эти порты.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: meterway-postgres
+    environment:
+      POSTGRES_DB: meterway
+      POSTGRES_USER: meterway
+      POSTGRES_PASSWORD: meterway
+    ports:
+      - "5432:5432"
+    volumes:
+      # В образе postgres:18 данные лежат в /var/lib/postgresql/<версия>/docker,
+      # поэтому монтируется каталог целиком, а не подкаталог data, как было до 18.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meterway -d meterway"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:8-alpine
+    container_name: meterway-redis
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: meterway-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: meterway-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    profiles: ["observability"]
+
+  jaeger:
+    image: jaegertracing/jaeger:2.10.0
+    container_name: meterway-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    profiles: ["observability"]
+
+volumes:
+  postgres-data:

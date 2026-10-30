@@ -9,10 +9,19 @@ Guice 6 (`javax.inject`), Twirl, Play Evolutions, Caffeine.
 
 ## Быстрый старт
 
+Нужны **JDK 27** и Docker. Отдельно устанавливать sbt не требуется: в проект включены
+скрипты `sbtw` / `sbtw.cmd` и официальный launcher sbt 1.13.0.
+Версия sbt задаётся в `project/build.properties`. При первом запуске нужен интернет:
+launcher загрузит sbt и зависимости в локальные кэши пользователя.
+
 ```bash
 docker compose up -d postgres
-sbt run
+./sbtw run
 ```
+
+В Windows вместо `./sbtw` используйте `.\sbtw.cmd` (например, `.\sbtw.cmd run`).
+Скрипты используют Java из `JAVA_HOME`, а если он не задан — из `PATH`.
+Дополнительные параметры JVM можно передать через `JDK_JAVA_OPTIONS`.
 
 Открыть:
 
@@ -26,7 +35,21 @@ sbt run
 | http://localhost:9000/health, `/ready`, `/metrics` | эксплуатация |
 
 При первом запросе Play предложит применить эволюции — нажать «Apply this script now».
-Без интерактива: `sbt "run -Dplay.evolutions.db.default.autoApply=true"`.
+Без интерактива: `./sbtw "run -Dplay.evolutions.db.default.autoApply=true"`.
+
+### Проверка launcher
+
+`project/sbt-launch.jar` — единственный JAR инструмента сборки, включённый в репозиторий.
+Он загружен из [Maven Central](https://repo.maven.apache.org/maven2/org/scala-sbt/sbt-launch/1.13.0/).
+Контрольная сумма SHA-256 сохранена рядом; проверить её на macOS/Linux можно командой:
+
+```bash
+(cd project && shasum -a 256 -c sbt-launch.jar.sha256)
+```
+
+Лицензия и уведомление из оригинального JAR сохранены в `project/sbt-launch.LICENSE`
+и `project/sbt-launch.NOTICE`. При обновлении launcher обновляйте также его контрольную
+сумму, лицензионные файлы и версию в `project/build.properties`.
 
 Ключ демо-организации для приватного API:
 
@@ -100,7 +123,7 @@ test/                    JUnit 4 + play-test
 ## Тесты
 
 ```bash
-sbt test
+./sbtw test
 ```
 
 Тесты поднимают приложение на H2 в памяти (`MODE=PostgreSQL`), применяют те же эволюции
@@ -116,7 +139,7 @@ sbt test
 ## Сборка и запуск в контейнере
 
 ```bash
-sbt Docker/publishLocal
+./sbtw Docker/publishLocal
 docker compose up -d
 ```
 

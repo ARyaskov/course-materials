@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: meterway
+    metrics_path: /prometheus
+    static_configs:
+      # host.docker.internal работает в Docker Desktop; в Linux используйте адрес хоста.
+      - targets: ["host.docker.internal:8081"]

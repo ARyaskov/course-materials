@@ -1,0 +1,22 @@
+#!/bin/sh
+# Project-local sbt launcher. sbt.version is read from project/build.properties.
+set -eu
+
+project_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+
+if [ -n "${JAVA_HOME:-}" ]; then
+    java_cmd="$JAVA_HOME/bin/java"
+    if [ ! -x "$java_cmd" ]; then
+        printf '%s\n' 'JAVA_HOME must point to a JDK installation.' >&2
+        exit 1
+    fi
+else
+    if ! command -v java >/dev/null 2>&1; then
+        printf '%s\n' 'Install JDK 27 and set JAVA_HOME or add java to PATH.' >&2
+        exit 1
+    fi
+    java_cmd=java
+fi
+
+cd "$project_dir"
+exec "$java_cmd" -Xms256m -Xmx2g -Xss4m -jar "$project_dir/project/sbt-launch.jar" "$@"

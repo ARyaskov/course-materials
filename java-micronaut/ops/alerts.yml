@@ -1,0 +1,41 @@
+# Правила алертов для конвейера Meterway.
+groups:
+  - name: meterway-ingest
+    rules:
+      - alert: MeterwayIngestRejectionSpike
+        expr: |
+          sum(rate(meterway_ingest_events_total{outcome="rejected"}[5m]))
+            / sum(rate(meterway_ingest_events_total[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Более 5% событий отклоняется"
+          description: "Проверьте каталог метрик и справочник клиентов: источник шлёт неизвестные коды."
+
+      - alert: MeterwayIdempotencyConflicts
+        expr: rate(meterway_ingest_idempotency_conflicts_total[10m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Источник переиспользует ключи идемпотентности"
+
+      - alert: MeterwayOutboxLag
+        expr: meterway_outbox_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Outbox не разбирается более 5 минут"
+          description: "Счета выставляются, уведомления не уходят. Проверьте OutboxPublisher и доступность вебхуков."
+
+      - alert: MeterwayEventLoopBlocked
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{uri="/v1/usage-events"}[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "p99 приёма событий выше секунды"
+          description: "Типичная причина — блокирующий код без @ExecuteOn или исчерпанный пул соединений."
