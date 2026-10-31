@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n             count(l.id) AS \"total!\",\n             count(p.lesson_id) AS \"completed!\"\n           FROM lessons l\n           LEFT JOIN lesson_progress p ON p.lesson_id = l.id AND p.user_id = $1\n           WHERE l.course_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "completed!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "8ab603e55db287eacf632d62cb5e975f6d84436727481e477dee521cd99fe39b"
+}

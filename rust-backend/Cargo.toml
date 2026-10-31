@@ -1,0 +1,109 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/courseflow-core",
+    "crates/courseflow-app",
+    "crates/courseflow-api",
+    "crates/courseflow-worker",
+    "crates/billing-mock",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+courseflow-core = { path = "crates/courseflow-core" }
+courseflow-app = { path = "crates/courseflow-app" }
+
+# async runtime
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "signal", "sync", "time", "net"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures = "0.3"
+
+# http
+axum = { version = "0.8", features = ["macros", "ws"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
+tower = { version = "0.5", features = ["util", "limit", "timeout"] }
+tower-http = { version = "0.7", features = ["trace", "cors", "timeout", "request-id", "limit", "compression-gzip", "set-header", "util"] }
+http = "1"
+hyper = "1"
+
+# serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_with = { version = "3", features = ["chrono_0_4"] }
+
+# database & cache
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "macros", "migrate", "uuid", "chrono", "json", "rust_decimal", "derive", "sqlx-toml"] }
+redis = { version = "1.7", default-features = false, features = ["tokio-comp", "connection-manager", "script"] }
+
+# outbound http
+reqwest = { version = "0.13", default-features = false, features = ["json", "query", "rustls"] }
+
+# ids, time, money
+uuid = { version = "1", features = ["v7", "v5", "serde"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+rust_decimal = { version = "1", features = ["serde", "macros"] }
+
+# errors & config
+thiserror = "2"
+anyhow = "1"
+dotenvy = "0.15"
+secrecy = { version = "0.10", features = ["serde"] }
+
+# security
+argon2 = { version = "0.6", features = ["password-hash", "getrandom"] }
+jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto"] }
+rand = { version = "0.10", features = ["thread_rng"] }
+hmac = "0.13"
+sha2 = "0.11"
+hex = "0.4"
+subtle = "2"
+base64 = "0.22"
+
+# observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.18", default-features = false }
+
+# openapi
+utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"] }
+utoipa-axum = "0.2"
+
+# tests
+wiremock = "0.6"
+testcontainers = "0.28"
+
+# tracing → OpenTelemetry (optional feature `otel` in courseflow-app)
+opentelemetry = "0.32"
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.32", default-features = false, features = ["http-proto", "reqwest-blocking-client", "trace"] }
+tracing-opentelemetry = "0.33"
+insta = { version = "1", features = ["json"] }
+proptest = "1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+dbg_macro = "warn"
+todo = "warn"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "unwind"
+
+[profile.dev.package."*"]
+opt-level = 1

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n             count(*) FILTER (WHERE status IN ('pending', 'processing')) AS \"pending!\",\n             count(*) FILTER (WHERE status = 'dead') AS \"dead!\"\n           FROM outbox_events",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pending!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "dead!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "b7e03a67033240f72fb0853eaa1a7399c652dc3dda661fd61d86995b897a866d"
+}

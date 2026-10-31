@@ -1,0 +1,66 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH due AS (\n            SELECT id FROM outbox_events\n            WHERE status IN ('pending', 'processing')\n              AND next_attempt_at <= $3\n              AND (locked_until IS NULL OR locked_until < $3)\n            ORDER BY next_attempt_at\n            LIMIT $1\n            FOR UPDATE SKIP LOCKED\n        )\n        UPDATE outbox_events o\n        SET status = 'processing', locked_until = $3::timestamptz + make_interval(secs => $2), attempts = o.attempts + 1\n        FROM due\n        WHERE o.id = due.id\n        RETURNING o.id, o.event_type, o.payload AS \"payload: Json<OutboxPayload>\", o.attempts\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "outbox_events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "event_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outbox_events",
+            "name": "event_type"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "payload: Json<OutboxPayload>",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "outbox_events",
+            "name": "payload"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "attempts",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "outbox_events",
+            "name": "attempts"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Float8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ad2079a66a4576b7a457bbe172d3ed0a6ec511ba47d53ad8bcc2bdde18decd33"
+}

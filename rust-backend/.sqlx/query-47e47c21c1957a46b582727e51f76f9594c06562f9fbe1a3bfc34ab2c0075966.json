@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE purchases SET status = $2, provider_payment_id = $3, failure_reason = $4, updated_at = $5 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "47e47c21c1957a46b582727e51f76f9594c06562f9fbe1a3bfc34ab2c0075966"
+}

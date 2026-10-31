@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM outbox_events WHERE status = 'done' AND processed_at < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "34f2d2d23f56e910647bf5a472c636354efd77cd62977460f2955b3063e2f7ec"
+}

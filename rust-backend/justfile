@@ -1,0 +1,77 @@
+# CourseFlow task runner. `just` lists recipes; `just check` is what CI runs.
+
+set dotenv-load := true
+
+default:
+    @just --list
+
+# Start PostgreSQL 18 and Redis 8 for local development
+db-up:
+    docker compose up -d postgres redis
+
+db-down:
+    docker compose down
+
+# Apply migrations to $DATABASE_URL
+migrate:
+    cargo sqlx migrate run
+
+# Add a migration: just migrate-add add_reviews
+migrate-add name:
+    cargo sqlx migrate add {{name}}
+
+# Refresh .sqlx/ after changing any query!() — commit the result
+prepare:
+    cargo sqlx prepare --workspace
+
+# Formatting, lints, offline metadata and tests: the CI gate
+check: fmt-check clippy prepare-check test
+
+fmt:
+    cargo fmt --all
+
+fmt-check:
+    cargo fmt --all --check
+
+clippy:
+    cargo clippy --workspace --all-targets -- -D warnings
+
+prepare-check:
+    cargo sqlx prepare --workspace --check
+
+test:
+    cargo nextest run --workspace --no-fail-fast
+
+# Run the three processes locally (needs db-up + migrate)
+api:
+    cargo run -p courseflow-api
+
+worker:
+    cargo run -p courseflow-worker
+
+billing:
+    cargo run -p billing-mock
+
+# Supply-chain checks
+audit:
+    cargo deny check
+    cargo machete
+
+# Build all images and run the smoke script against Compose
+smoke:
+    docker compose --profile full build
+    ./scripts/smoke.sh
+
+# Toolchain sanity check
+doctor:
+    rustc --version
+    cargo --version
+    cargo sqlx --version
+    docker --version
+
+# Traces: Jaeger UI on :16686; run api/worker with --features otel and COURSEFLOW_OTLP_ENDPOINT
+otel:
+    docker compose --profile otel up -d jaeger
+
+api-otel:
+    COURSEFLOW_OTLP_ENDPOINT=http://localhost:4318 cargo run -p courseflow-api --features otel

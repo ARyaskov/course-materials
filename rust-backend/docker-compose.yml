@@ -1,0 +1,94 @@
+# Local production-like environment. `docker compose up postgres redis` is the
+# dev setup; the `full` profile also builds and runs the three binaries.
+name: courseflow
+
+x-app-env: &app-env
+  COURSEFLOW_DATABASE_URL: postgres://courseflow:courseflow@postgres:5432/courseflow
+  COURSEFLOW_REDIS_URL: redis://redis:6379/0
+  COURSEFLOW_JWT_SECRET: ${COURSEFLOW_JWT_SECRET:-compose-only-secret-change-me-32-bytes!}
+  COURSEFLOW_BILLING_BASE_URL: http://billing-mock:8090
+  COURSEFLOW_BILLING_API_KEY: dev-api-key
+  COURSEFLOW_BILLING_WEBHOOK_SECRET: dev-webhook-secret
+  COURSEFLOW_PUBLIC_BASE_URL: http://api:8080
+  COURSEFLOW_ENV: local
+  COURSEFLOW_LOG_FORMAT: json
+  RUST_LOG: info,courseflow=debug
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: courseflow
+      POSTGRES_PASSWORD: courseflow
+      POSTGRES_DB: courseflow
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courseflow -d courseflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    profiles: ["full"]
+    build: { context: ., target: api }
+    command: ["migrate"]
+    environment: *app-env
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    profiles: ["full"]
+    build: { context: ., target: api }
+    environment:
+      <<: *app-env
+      COURSEFLOW_HTTP_ADDR: 0.0.0.0:8080
+    ports: ["8080:8080"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    stop_grace_period: 25s
+    init: true
+
+  worker:
+    profiles: ["full"]
+    build: { context: ., target: worker }
+    environment:
+      <<: *app-env
+      COURSEFLOW_WORKER_HTTP_ADDR: 0.0.0.0:8081
+    ports: ["8081:8081"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    stop_grace_period: 25s
+    init: true
+
+  billing-mock:
+    profiles: ["full"]
+    build: { context: ., target: billing-mock }
+    environment:
+      BILLING_MOCK_ADDR: 0.0.0.0:8090
+      COURSEFLOW_BILLING_WEBHOOK_SECRET: dev-webhook-secret
+      COURSEFLOW_BILLING_API_KEY: dev-api-key
+    ports: ["8090:8090"]
+
+  # Traces: `docker compose --profile otel up jaeger`, then run the binaries
+  # built with `--features otel` and COURSEFLOW_OTLP_ENDPOINT=http://localhost:4318.
+  # UI: http://localhost:16686
+  jaeger:
+    profiles: ["otel"]
+    image: jaegertracing/jaeger:2.13.0
+    ports: ["16686:16686", "4318:4318"]
+
+volumes:
+  pgdata:

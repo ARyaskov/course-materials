@@ -1,0 +1,16 @@
+# cargo-nextest profiles. `default` is what developers run; `ci` never
+# fail-fasts, writes a junit report and retries only tests explicitly marked
+# as flaky in their name (there are none today — the override documents the
+# policy, not a need).
+[profile.default]
+slow-timeout = { period = "10s" }
+fail-fast = true
+
+[profile.ci]
+fail-fast = false
+slow-timeout = { period = "30s", terminate-after = 2 }
+junit = { path = "junit.xml" }
+
+[[profile.ci.overrides]]
+filter = 'test(/_flaky_/)'
+retries = { backoff = "fixed", count = 2, delay = "2s" }

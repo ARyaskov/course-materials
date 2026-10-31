@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.lesson_id FROM lesson_progress p JOIN lessons l ON l.id = p.lesson_id\n           WHERE p.user_id = $1 AND l.course_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "lesson_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "lesson_progress",
+            "name": "lesson_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "21d5dd56100971f61332f3ffa4dd26ab633391d4330382d4db4880abd692900d"
+}

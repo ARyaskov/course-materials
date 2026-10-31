@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE lessons SET title = $2, content_md = $3, is_free_preview = $4, updated_at = $5 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "99ed79fac4e4893e05dd5f650ec3ded8f18c2cb7566f81648ac300d336def92b"
+}

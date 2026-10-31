@@ -1,0 +1,39 @@
+---
+source: crates/courseflow-api/tests/contract.rs
+expression: paths
+---
+[
+  "/api/v1/admin/courses/{course_id}/grants",
+  "/api/v1/admin/users/{id}/role",
+  "/api/v1/auth/forgot-password",
+  "/api/v1/auth/login",
+  "/api/v1/auth/logout",
+  "/api/v1/auth/refresh",
+  "/api/v1/auth/register",
+  "/api/v1/auth/reset-password",
+  "/api/v1/auth/verify-email",
+  "/api/v1/certificates/{code}",
+  "/api/v1/courses",
+  "/api/v1/courses/{course_id}/checkout",
+  "/api/v1/courses/{course_id}/enroll",
+  "/api/v1/courses/{course_id}/lessons",
+  "/api/v1/courses/{id}",
+  "/api/v1/courses/{id}/archive",
+  "/api/v1/courses/{id}/publish",
+  "/api/v1/lessons/{id}",
+  "/api/v1/lessons/{id}/complete",
+  "/api/v1/me",
+  "/api/v1/me/courses",
+  "/api/v1/me/courses/{course_id}/certificate",
+  "/api/v1/me/courses/{course_id}/progress",
+  "/api/v1/me/enrollments",
+  "/api/v1/me/purchases",
+  "/api/v1/me/purchases/{id}",
+  "/api/v1/notifications",
+  "/api/v1/notifications/stream",
+  "/api/v1/notifications/unread",
+  "/api/v1/notifications/{id}/read",
+  "/api/v1/webhooks/billing",
+  "/health/live",
+  "/health/ready"
+]

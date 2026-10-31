@@ -1,0 +1,46 @@
+# Build outputs, reports and local runtime data
+/target/
+**/target/
+data/
+logs/
+coverage/
+.cache/
+*.log
+*.log.*
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.profraw
+*.profdata
+
+# Pending snapshots are local; approved .snap and proptest regressions stay tracked
+*.snap.new
+*.pending-snap
+*.rs.bk
+
+# Local credentials; only explicit environment examples may be published
+.env
+.env.*
+*.env
+!.env.example
+!.env.sample
+.cargo/credentials
+.cargo/credentials.toml
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Local editor and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Cargo.lock and .sqlx/ are intentionally retained for reproducible offline builds

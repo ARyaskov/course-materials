@@ -1,0 +1,8 @@
+# SQLx 0.9 per-crate configuration (feature `sqlx-toml`). Kept minimal on
+# purpose: the defaults are right for a single-database workspace. See the
+# reference at sqlx-core/src/config/reference.toml.
+[common]
+# database-url-var = "COURSEFLOW_DATABASE_URL"
+
+[migrate]
+# ignored-chars = ["\r"]   # uncomment on Windows checkouts with CRLF endings
