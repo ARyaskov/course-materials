@@ -1,0 +1,2 @@
+# Corpus inputs are byte-exact; CRLF is part of the network protocol.
+corpus/** -text

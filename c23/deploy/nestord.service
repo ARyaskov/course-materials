@@ -1,0 +1,36 @@
+[Unit]
+Description=nestor key-value server
+Documentation=file:/usr/local/share/doc/nestor/architecture.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/nestord --dir /var/lib/nestor --port 7717 --sync interval --log-level info
+User=nestor
+Group=nestor
+StateDirectory=nestor
+StateDirectoryMode=0750
+
+# Останов: SIGTERM попадает в signalfd, сервер дописывает ответы,
+# закрывает соединения и делает финальный fsync.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=2
+
+# Дескрипторов нужно столько, сколько соединений плюс сегменты.
+LimitNOFILE=65536
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/nestor
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryDenyWriteExecute=yes
+
+[Install]
+WantedBy=multi-user.target
