@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CourseFlow.Api/CourseFlow.Api.csproj" />
+    <Project Path="src/CourseFlow.Contracts/CourseFlow.Contracts.csproj" />
+    <Project Path="src/CourseFlow.ServiceDefaults/CourseFlow.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CourseFlow.Tests.Unit/CourseFlow.Tests.Unit.csproj" />
+    <Project Path="tests/CourseFlow.Tests.Integration/CourseFlow.Tests.Integration.csproj" />
+  </Folder>
+  <Folder Name="/aspire/">
+    <Project Path="src/CourseFlow.AppHost/CourseFlow.AppHost.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Общие свойства всех проектов решения (Глава 4: .csproj без магии) -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- NETSDK1057: "You are using a preview version of .NET" — ожидаемо до GA .NET 11 -->
+    <NoWarn>$(NoWarn);NETSDK1057</NoWarn>
+  </PropertyGroup>
+
+</Project>

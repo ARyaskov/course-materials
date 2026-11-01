@@ -1,0 +1,16 @@
+# Зависимости проекта поверх образа apache/airflow.
+# Версии не закреплены ради читаемости; для воспроизводимой сборки используйте
+# constraints-файл Airflow (см. README).
+
+# Провайдеры
+apache-airflow-providers-postgres
+apache-airflow-providers-amazon
+apache-airflow-providers-common-sql
+
+# Объектное хранилище (ObjectStoragePath для s3://)
+s3fs
+
+# Обработка данных и HTTP
+pandas
+pyarrow
+httpx

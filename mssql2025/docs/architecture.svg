@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 640" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <style>
+      .box{fill:#f7f9fc;stroke:#4a6fa5;stroke-width:1.5;rx:8}
+      .db{fill:#eef6ee;stroke:#3a7d44;stroke-width:1.5;rx:8}
+      .ext{fill:#fff7e6;stroke:#c98a1b;stroke-width:1.5;rx:8}
+      .t{fill:#222}.s{fill:#555;font-size:11px}
+      .l{stroke:#555;stroke-width:1.4;fill:none;marker-end:url(#a)}
+    </style>
+  </defs>
+  <text x="590" y="26" text-anchor="middle" font-size="18" class="t">Waybill — трекинг отправлений на SQL Server 2025</text>
+
+  <!-- external -->
+  <rect x="20" y="70" width="170" height="60" class="ext"/><text x="105" y="96" text-anchor="middle" class="t">Перевозчики</text><text x="105" y="114" text-anchor="middle" class="s">FASTEX · NORDPOST · CITYRUN</text>
+  <rect x="20" y="170" width="170" height="60" class="ext"/><text x="105" y="196" text-anchor="middle" class="t">Файлы событий</text><text x="105" y="214" text-anchor="middle" class="s">CSV/JSON → BULK INSERT (гл. 10)</text>
+  <rect x="20" y="470" width="170" height="60" class="ext"/><text x="105" y="496" text-anchor="middle" class="t">Магазины</text><text x="105" y="514" text-anchor="middle" class="s">webhook с HMAC (гл. 17)</text>
+  <rect x="20" y="370" width="170" height="60" class="ext"/><text x="105" y="396" text-anchor="middle" class="t">Модель эмбеддингов</text><text x="105" y="414" text-anchor="middle" class="s">Ollama / Azure OpenAI (гл. 14)</text>
+
+  <!-- api -->
+  <rect x="260" y="60" width="230" height="200" class="box"/>
+  <text x="375" y="84" text-anchor="middle" class="t" font-weight="bold">Waybill.Api (.NET 10)</text>
+  <text x="272" y="108" class="s">POST /webhooks/{carrier} · /carriers/{c}/events</text>
+  <text x="272" y="126" class="s">GET /shipments/{t}/timeline (ETag) · PATCH If-Match</text>
+  <text x="272" y="144" class="s">GET /merchants/{id}/shipments[/sorted]</text>
+  <text x="272" y="162" class="s">/incidents/* (похожие, поиск) · /invoices/*</text>
+  <text x="272" y="186" class="s">SqlConnectionFactory + retry · SESSION_CONTEXT(user, MerchantId)</text>
+  <text x="272" y="204" class="s">SqlExceptionMiddleware (5xxxx → HTTP) · OpenTelemetry</text>
+  <text x="272" y="228" class="s">OutboxDispatcher: партиции, аренда, подпись, notifyOn</text>
+  <text x="272" y="246" class="s">EmbeddingService · Simulator · Migrator</text>
+
+  <!-- database -->
+  <rect x="540" y="60" width="620" height="470" class="db"/>
+  <text x="850" y="84" text-anchor="middle" class="t" font-weight="bold">SQL Server 2025 · база Waybill (compat 170, RCSI, ADR, optimized locking)</text>
+
+  <rect x="555" y="100" width="185" height="120" class="box"/><text x="647" y="120" text-anchor="middle" class="t">ref · crm</text>
+  <text x="562" y="140" class="s">Carrier, ShipmentStatus, Region</text><text x="562" y="156" class="s">CarrierStatusMap</text><text x="562" y="172" class="s">Merchant (Settings json)</text><text x="562" y="188" class="s">MerchantWebhook (секрет, DDM)</text><text x="562" y="204" class="s">маски DDM · RLS-обход ролям</text>
+
+  <rect x="755" y="100" width="190" height="120" class="box"/><text x="850" y="120" text-anchor="middle" class="t">ship</text>
+  <text x="762" y="140" class="s">Shipment (temporal, RowVer, json Attributes)</text><text x="762" y="156" class="s">Address (нормализация, DDM)</text><text x="762" y="172" class="s">TrackingEvent (секции по месяцам, NCCI)</text><text x="762" y="188" class="s">TrackingEventArchive (CCI) · RecipientContact (AE)</text><text x="762" y="204" class="s">RLS sec.MerchantIsolation</text>
+
+  <rect x="960" y="100" width="185" height="120" class="box"/><text x="1052" y="120" text-anchor="middle" class="t">ops</text>
+  <text x="967" y="140" class="s">WebhookInbox · RejectedEvent</text><text x="967" y="156" class="s">Outbox (партиции) · OutboxDelivery</text><text x="967" y="172" class="s">Incident (vector, чанки) · Setting</text><text x="967" y="188" class="s">EventSeen (In-Memory) · HealthLog</text><text x="967" y="204" class="s">SchemaSnapshot · BackupRun · AiCallLog</text>
+
+  <rect x="555" y="235" width="185" height="95" class="box"/><text x="647" y="255" text-anchor="middle" class="t">bill · analytics</text>
+  <text x="562" y="275" class="s">Tariff (ledger append-only)</text><text x="562" y="291" class="s">Surcharge (updatable ledger)</text><text x="562" y="307" class="s">Invoice + InvoiceLine (ledger)</text><text x="562" y="323" class="s">CarrierSla (витрина, NCCI)</text>
+
+  <rect x="755" y="235" width="390" height="95" class="box"/><text x="950" y="255" text-anchor="middle" class="t">Хранимый код (ownership chaining, EXECUTE на схемы)</text>
+  <text x="762" y="275" class="s">ops.usp_ReceiveWebhook → tvf_ParseWebhook → usp_IngestTrackingEvents (TVP, классификация, outbox)</text>
+  <text x="762" y="291" class="s">ship.usp_GetShipmentTimeline (JSON) · usp_UpdateShipmentIfMatch (ETag) · usp_ListShipmentsSorted</text>
+  <text x="762" y="307" class="s">ops.usp_DequeueOutbox/Complete/Fail · Service Broker //waybill/outbox/* · native usp_TryMarkEventSeen</text>
+  <text x="762" y="323" class="s">ops.usp_FindSimilarIncidents · usp_SearchIncidentsHybrid (RRF) · bill.usp_GenerateInvoice</text>
+
+  <rect x="555" y="345" width="590" height="80" class="box"/><text x="850" y="365" text-anchor="middle" class="t">Наблюдение и эксплуатация</text>
+  <text x="562" y="385" class="s">Query Store (+hints, baseline/compare) · XEvents waybill_* · wait stats snapshots · ops.usp_LogHealth · vw_RunbookStatus</text>
+  <text x="562" y="401" class="s">Agent: partitions, purge, SLA, indexes, ledger digest, wait stats, embed, backup FULL/DIFF/LOG, CHECKDB, health report</text>
+  <text x="562" y="417" class="s">Resource Governor (api / background, tempdb) · SQL Audit Waybill_Audit · TDE по флагу · drift-check</text>
+
+  <rect x="555" y="440" width="590" height="75" class="box"/><text x="850" y="460" text-anchor="middle" class="t">Безопасность</text>
+  <text x="562" y="480" class="s">роли waybill_api / waybill_ingest / waybill_readonly / waybill_ops · логины стенда · DENY ship.Address для API</text>
+  <text x="562" y="496" class="s">RLS по SESSION_CONTEXT('MerchantId') (read-only) · DDM на PII · Always Encrypted для RecipientContact · CES/CDC/CT для интеграций</text>
+
+  <!-- arrows -->
+  <path d="M190,100 L260,100" class="l"/><text x="196" y="94" class="s">webhook</text>
+  <path d="M190,200 L540,200" class="l"/><text x="330" y="194" class="s">BULK INSERT (ops.EventImportRaw → ingest)</text>
+  <path d="M490,160 L540,160" class="l"/><text x="492" y="152" class="s">TDS 8</text>
+  <path d="M375,260 L375,500 L190,500" class="l"/><text x="200" y="560" class="s">outbox → HTTP POST, X-Waybill-Signature</text>
+  <path d="M260,400 L190,400" class="l"/><text x="200" y="440" class="s">/api/embed (или EXTERNAL MODEL из базы)</text>
+
+  <text x="590" y="600" text-anchor="middle" class="s">Потоки: webhook → inbox → ingest (TVP) → события/статус → temporal-история → outbox → доставка магазину · витрина SLA · счёт по ledger-тарифу</text>
+  <text x="590" y="620" text-anchor="middle" class="s">CI: контейнер 2025 → Migrator → xUnit/Testcontainers + tSQLt → smoke → Query Store compare → drift-check → артефакты</text>
+</svg>

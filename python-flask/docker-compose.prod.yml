@@ -1,0 +1,85 @@
+# Рабочий контур. Отличия от файла разработки существенные, поэтому это
+# отдельный файл, а не набор переопределений: смешение приводит к тому,
+# что настройка для разработки однажды уезжает в бой.
+#
+# База и кеш здесь не описаны намеренно: в рабочем контуре это управляемые
+# сервисы с резервным копированием и репликами, а не контейнеры рядом
+# с приложением.
+
+services:
+  api:
+    image: ${DEPOT_IMAGE}
+    environment:
+      DEPOT_ENV: production
+      DEPOT_LOG_FORMAT: json
+      DEPOT_DOCS_ENABLED: "false"
+    env_file:
+      # секреты приходят файлом, а не значениями в этом файле: он лежит
+      # в репозитории, а .env — нет
+      - .env.production
+    ports:
+      - "127.0.0.1:8000:8000"
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          # предел памяти обязателен: без него утечка в одном процессе
+          # уводит в своп всю машину
+          memory: 512M
+        reservations:
+          memory: 256M
+      update_config:
+        # выкладка по одному экземпляру: остальные продолжают обслуживать
+        order: start-first
+        delay: 10s
+        failure_action: rollback
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz').read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        # без ограничения журнал контейнера съедает диск за недели
+        max-size: "20m"
+        max-file: "5"
+    restart: always
+
+  worker:
+    image: ${DEPOT_IMAGE}
+    command: ["rq", "worker", "--url", "${DEPOT_REDIS_URL}", "default"]
+    env_file:
+      - .env.production
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+    # воркеру нужно время закончить текущую задачу; сигнал приходит сразу,
+    # убийство — по истечении этого срока
+    stop_grace_period: 60s
+    restart: always
+
+  scheduler:
+    image: ${DEPOT_IMAGE}
+    command: ["python", "-c", "from depot.jobs.scheduler import run_forever; run_forever()"]
+    env_file:
+      - .env.production
+    deploy:
+      # ровно один: несколько планировщиков поставят одну задачу несколько
+      # раз, и защита замком станет единственным барьером
+      replicas: 1
+    restart: always
+
+  migrate:
+    image: ${DEPOT_IMAGE}
+    command: ["flask", "db", "upgrade"]
+    env_file:
+      - .env.production
+    # разовая задача: перезапускать её после успешного завершения нельзя,
+    # иначе она будет крутиться в цикле
+    restart: "no"
+    deploy:
+      replicas: 0

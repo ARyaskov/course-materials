@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Waybill.Data/Waybill.Data.csproj" />
+    <Project Path="src/Waybill.Api/Waybill.Api.csproj" />
+    <Project Path="src/Waybill.Migrator/Waybill.Migrator.csproj" />
+    <Project Path="src/Waybill.Simulator/Waybill.Simulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Waybill.Tests/Waybill.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,46 @@
+# Всё, что не нужно в контексте сборки. Файл влияет на две вещи сразу:
+# размер контекста, который демон копирует перед сборкой, и попадание
+# лишнего внутрь образа.
+
+# Секреты не должны оказаться в слоях образа даже случайно
+.env
+.env.*
+!.env.example
+
+# История репозитория весит больше исходников и в образе бесполезна
+.git
+.gitignore
+
+# Виртуальные окружения собраны под другую платформу
+.venv
+venv
+
+__pycache__
+*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+
+.coverage
+htmlcov
+coverage.xml
+
+tests
+docs
+deploy
+scripts
+
+var
+*.sqlite3
+
+build
+dist
+*.egg-info
+
+.idea
+.vscode
+docker-compose*.yml
+Makefile
+
+# README.md здесь нет намеренно: на него ссылается поле readme
+# в pyproject.toml, и без него установка пакета падает

@@ -1,0 +1,26 @@
+# Build output and generated intermediates
+**/bin/
+**/obj/
+artifacts/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Tests and coverage
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# Editors and logs
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.log
+.DS_Store
+Thumbs.db

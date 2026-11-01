@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>courseflow-api</UserSecretsId>
+    <!-- Program partial-класс нужен WebApplicationFactory<Program> в интеграционных тестах -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- HotChocolate добавляет global using HotChocolate/GreenDonut, чьи Error и Result<T> конфликтуют с нашими -->
+    <HotChocolateImplicitUsings>disable</HotChocolateImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Aspire client integrations (Глава 21): DbContext + Redis с health checks и телеметрией -->
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.5.4" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.5.4" />
+
+    <!-- EF Core 11 + PostgreSQL (Глава 9). Версия preview.6, а не RC: пакет Npgsql RC1 требует сборку EF
+         из внутреннего feed Microsoft, которой нет на nuget.org. Все версии EF выравниваем явно -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="11.0.0-preview.6.26359.118" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-preview.6.26359.118">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-preview.6" />
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="Dapper" Version="2.1.86" />
+
+    <!-- Messaging (Глава 17): MassTransit 8.x — последняя линейка под Apache-2.0 -->
+    <PackageReference Include="MassTransit" Version="8.5.10" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.10" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.10" />
+
+    <!-- Auth (Глава 13) -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="11.0.0-rc.1.26425.128" />
+
+    <!-- Validation (Глава 7) -->
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+
+    <!-- GraphQL (Глава 11) -->
+    <PackageReference Include="HotChocolate.AspNetCore" Version="16.6.6" />
+    <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="16.6.6" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="16.6.6" />
+
+    <!-- OpenAPI + Scalar UI (Глава 5.8) -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.4" />
+
+    <!-- Observability (Глава 18): Serilog + Prometheus-экспортёр OpenTelemetry -->
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.18.0-beta.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CourseFlow.Contracts\CourseFlow.Contracts.csproj" />
+    <ProjectReference Include="..\CourseFlow.ServiceDefaults\CourseFlow.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CourseFlow.Tests.Unit" />
+    <InternalsVisibleTo Include="CourseFlow.Tests.Integration" />
+  </ItemGroup>
+
+</Project>

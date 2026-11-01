@@ -1,0 +1,16 @@
+# Prometheus scrape-конфигурация (Глава 18.5). API отдаёт метрики OpenTelemetry на /metrics.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: courseflow-api
+    metrics_path: /metrics
+    static_configs:
+      # API, запущенный через dotnet run на хосте
+      - targets: ["host.docker.internal:8080"]
+        labels:
+          instance: local
+      # API в контейнере (docker compose --profile api)
+      - targets: ["api:8080"]
+        labels:
+          instance: container

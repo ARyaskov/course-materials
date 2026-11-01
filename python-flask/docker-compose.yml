@@ -1,0 +1,95 @@
+# Окружение разработки: приложение, база, кеш и воркер.
+# Рабочий контур описан отдельно в docker-compose.prod.yml — смешивать
+# их в одном файле с профилями означает однажды запустить сборку
+# для разработки в бою.
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    ports:
+      # порт публикуется только на локальный интерфейс: иначе сервис
+      # разработчика оказывается доступен из сети офиса
+      - "127.0.0.1:8000:8000"
+    environment:
+      DEPOT_ENV: development
+      DEPOT_SECRET_KEY: dev-secret-not-for-production
+      DEPOT_DATABASE_URL: postgresql+psycopg://depot:depot@db:5432/depot
+      DEPOT_REDIS_URL: redis://cache:6379/0
+      DEPOT_LOG_FORMAT: plain
+    depends_on:
+      db:
+        # ожидание готовности, а не запуска: контейнер базы поднимается
+        # раньше, чем она начинает принимать подключения
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    volumes:
+      # исходники подключены томом: перезапуск контейнера на каждую правку
+      # не нужен
+      - ./src:/app/src:ro
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: ["rq", "worker", "--url", "redis://cache:6379/0", "default"]
+    environment:
+      DEPOT_ENV: development
+      DEPOT_SECRET_KEY: dev-secret-not-for-production
+      DEPOT_DATABASE_URL: postgresql+psycopg://depot:depot@db:5432/depot
+      DEPOT_REDIS_URL: redis://cache:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+      target: runtime
+    # планировщик запускается в одном экземпляре: масштабировать его
+    # не нужно, задачи и так ставятся под замком
+    command: ["python", "-c", "from depot.jobs.scheduler import run_forever; run_forever()"]
+    environment:
+      DEPOT_ENV: development
+      DEPOT_SECRET_KEY: dev-secret-not-for-production
+      DEPOT_DATABASE_URL: postgresql+psycopg://depot:depot@db:5432/depot
+      DEPOT_REDIS_URL: redis://cache:6379/0
+    depends_on:
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: depot
+      POSTGRES_PASSWORD: depot
+      POSTGRES_DB: depot
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U depot -d depot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      # именованный том: данные переживают пересоздание контейнера
+      - depot_pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  cache:
+    image: redis:8-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  depot_pgdata:

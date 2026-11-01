@@ -1,0 +1,11 @@
+{
+  "shipment": {
+    "trackingNumber": "NP123456789RU",
+    "events": {
+      "event": [
+        {"eventId": "np-1", "code": "ACC", "timestamp": "2026-09-05T13:00:00+03:00", "place": "Санкт-Петербург", "zip": "190000", "description": "Посылка принята"},
+        {"eventId": "np-2", "code": "TRN", "timestamp": "2026-09-06T08:15:00+03:00", "place": "Казань", "zip": "420000", "description": "В пути"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,65 @@
+# CI CourseFlow (Глава 22.2, 22.8): восстановление, сборка, unit- и интеграционные тесты.
+# Ubuntu-runner GitHub Actions имеет Docker, поэтому Testcontainers работает без настройки.
+# Учебный workflow для отдельного репозитория, корнем которого служит этот проект.
+
+name: CourseFlow CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+
+defaults:
+  run:
+    working-directory: .
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore CourseFlow.slnx
+
+      - name: Build
+        run: dotnet build CourseFlow.slnx --no-restore -c Release
+
+      - name: Unit tests
+        run: dotnet test tests/CourseFlow.Tests.Unit --no-build -c Release --report-trx --results-directory TestResults
+
+      # Testcontainers сам поднимет PostgreSQL и Redis; Ryuk уберёт контейнеры после прогона (Глава 22.3)
+      - name: Integration tests
+        run: dotnet test tests/CourseFlow.Tests.Integration --no-build -c Release --report-trx --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+
+      # Образ собираем на каждом прогоне (проверяем Dockerfile), публикует его уже cd.yml
+      - name: Docker image builds
+        run: docker build -t courseflow-api:ci .

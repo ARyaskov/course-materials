@@ -1,0 +1,36 @@
+# Секреты. Строка обязательна: один случайный `git add .` с настоящим
+# .env означает ротацию всех ключей и разбор в журнале доступа.
+.env
+.env.*
+!.env.example
+
+# Виртуальные окружения
+.venv/
+venv/
+
+# Кеш интерпретатора и инструментов
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Отчёты о покрытии
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Локальные данные приложения
+var/
+*.sqlite3
+*.db
+
+# Сборка пакета
+build/
+dist/
+*.egg-info/
+
+# Среды разработки
+.idea/
+.vscode/

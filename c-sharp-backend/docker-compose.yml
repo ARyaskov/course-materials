@@ -1,0 +1,105 @@
+# Локальное окружение CourseFlow (Глава 20 "Docker и локальное окружение").
+#
+#   docker compose up -d                 # только инфраструктура + наблюдаемость
+#   docker compose --profile api up -d   # плюс сам API в контейнере (порт 8080)
+#
+# Порты и пароли переопределяются через .env (см. .env.example).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-courseflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-courseflow}
+      POSTGRES_DB: ${POSTGRES_DB:-courseflow}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-courseflow} -d ${POSTGRES_DB:-courseflow}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-courseflow}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-courseflow}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"   # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Observability (Глава 18) ---
+
+  jaeger:
+    image: jaegertracing/jaeger:2.11.0
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"   # UI
+      - "127.0.0.1:${OTLP_GRPC_PORT:-4317}:4317"     # OTLP gRPC
+      - "127.0.0.1:${OTLP_HTTP_PORT:-4318}:4318"     # OTLP HTTP
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # --- API в контейнере (по умолчанию выключен: локально удобнее dotnet run) ---
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__courseflow: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-courseflow};Username=${POSTGRES_USER:-courseflow};Password=${POSTGRES_PASSWORD:-courseflow}"
+      ConnectionStrings__redis: "redis:6379"
+      ConnectionStrings__rabbitmq: "amqp://${RABBITMQ_USER:-courseflow}:${RABBITMQ_PASSWORD:-courseflow}@rabbitmq:5672/"
+      Jwt__SecretKey: ${JWT_SECRET_KEY:?set JWT_SECRET_KEY in .env}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_SERVICE_NAME: courseflow-api
+      Seed__Enabled: "true"
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres-data:
+  rabbitmq-data:

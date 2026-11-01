@@ -1,0 +1,59 @@
+### Здоровье
+GET http://localhost:5080/health
+
+### Webhook FASTEX (массив событий)
+POST http://localhost:5080/webhooks/fastex
+Content-Type: application/json
+
+< ../../data/webhooks/fastex.json
+
+### Тот же документ повторно → 200 duplicate-webhook
+POST http://localhost:5080/webhooks/fastex
+Content-Type: application/json
+
+< ../../data/webhooks/fastex.json
+
+### Таймлайн с ETag
+GET http://localhost:5080/shipments/FX0000000001/timeline
+
+### Условное чтение (подставьте ETag из ответа выше)
+GET http://localhost:5080/shipments/FX0000000001/timeline
+If-None-Match: "AAAAAAAAB9E="
+
+### PATCH с If-Match (publicId и ETag — из таймлайна)
+PATCH http://localhost:5080/shipments/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+If-Match: "AAAAAAAAB9E="
+X-User: operator:anna
+
+{ "weightGrams": 1250, "attributes": { "fragile": true } }
+
+### Пакет событий через TVP
+POST http://localhost:5080/carriers/cityrun/events
+Content-Type: application/json
+
+[
+  { "trackingNumber": "CR-2026-000042", "externalEventId": "api-1", "externalStatus": "AT_DEPOT", "occurredAtUtc": "2026-09-17T09:00:00Z", "locationText": "Москва" }
+]
+
+### Глава 15: арендатор через заголовок → RLS (чужой трек-номер → 404)
+GET http://localhost:5080/shipments/FX0000000001/timeline
+X-Merchant-Id: 2
+
+### Сортировка по имени столбца (белый список на сервере; sort=Foo → 400)
+GET http://localhost:5080/merchants/1/shipments/sorted?sort=PromisedAt&dir=ASC&q=FX00&pageSize=5
+X-Merchant-Id: 1
+
+### Глава 17: счёт магазина за месяц — сгенерировать, посмотреть, выставить
+POST http://localhost:5080/merchants/1/invoices/2026-08
+X-Merchant-Id: 1
+X-User: billing:anna
+
+###
+GET http://localhost:5080/merchants/1/invoices/2026-08
+X-Merchant-Id: 1
+
+###
+POST http://localhost:5080/merchants/1/invoices/1/issue
+X-Merchant-Id: 1
+X-User: billing:anna

@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+.env
+data/*.bak
+*.user
+TestResults/
+# ERRORFILE от BULK INSERT (глава 10)
+data/**/*.errors
+data/**/*.errors.Error.Txt
+tests/tsqlt/results.xml
+artifacts/

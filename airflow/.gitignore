@@ -1,0 +1,11 @@
+# Логи и кэш
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Локальное окружение; в репозитории хранится только шаблон.
+.env
+.env.*
+!.env.example
