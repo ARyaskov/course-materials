@@ -1,0 +1,19 @@
+# Только пробы и lifecycle (урок 15.2); полный манифест — вне курса
+startupProbe:
+  httpGet: { path: /actuator/health/liveness, port: 8081 }
+  periodSeconds: 2
+  failureThreshold: 45
+livenessProbe:
+  httpGet: { path: /actuator/health/liveness, port: 8081 }
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+readinessProbe:
+  httpGet: { path: /actuator/health/readiness, port: 8081 }
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 2
+  successThreshold: 1
+lifecycle:
+  preStop:
+    exec: { command: ["sleep", "5"] }

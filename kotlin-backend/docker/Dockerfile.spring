@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1.7
+# Multi-stage: build → extract (layers) → runtime с CDS (уроки 15.1, 15.5)
+FROM eclipse-temurin:25-jdk AS build
+WORKDIR /src
+COPY gradlew settings.gradle.kts gradle.properties build.gradle.kts ./
+COPY gradle ./gradle
+COPY build-logic ./build-logic
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon dependencies > /dev/null
+COPY domain ./domain
+COPY application ./application
+COPY infrastructure ./infrastructure
+COPY app-spring ./app-spring
+ARG VERSION=dev
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon -Pversion=$VERSION :app-spring:bootJar -x test
+
+FROM eclipse-temurin:25-jdk AS extract
+WORKDIR /app
+COPY --from=build /src/app-spring/build/libs/app-spring-*.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
+
+FROM eclipse-temurin:25-jre AS runtime
+RUN groupadd --system atrium && useradd --system --gid atrium --no-create-home atrium
+WORKDIR /app
+COPY --from=extract --chown=atrium:atrium /app/extracted/dependencies/ ./
+COPY --from=extract --chown=atrium:atrium /app/extracted/spring-boot-loader/ ./
+COPY --from=extract --chown=atrium:atrium /app/extracted/snapshot-dependencies/ ./
+COPY --from=extract --chown=atrium:atrium /app/extracted/application/ ./
+USER atrium
+# training run для CDS: контекст поднимается и завершается без БД и Kafka
+RUN java -XX:ArchiveClassesAtExit=app.jsa -Dspring.context.exit=onRefresh -jar app.jar
+ENV JAVA_TOOL_OPTIONS="-XX:SharedArchiveFile=app.jsa -XX:MaxRAMPercentage=75 -XX:+UseZGC -XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/tmp/gc.log:time,uptime:filecount=3,filesize=10m"
+ARG VERSION=dev
+ENV ATRIUM_VERSION=$VERSION
+EXPOSE 8080 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]

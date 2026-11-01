@@ -1,0 +1,42 @@
+ktor:
+  deployment:
+    port: 8081
+    shutdownGracePeriod: 5000
+    shutdownTimeout: 20000
+  application:
+    modules:
+      - dev.atrium.ktor.ApplicationKt.module
+
+atrium:
+  database:
+    url: "$ATRIUM_DATABASE_URL:jdbc:postgresql://localhost:5432/atrium"
+    user: "$ATRIUM_DATABASE_USER:atrium"
+    password: "$ATRIUM_DATABASE_PASSWORD:atrium"
+    poolSize: 15
+  booking:
+    holdTtlMinutes: 15
+    noShowGraceMinutes: 15
+  paygate:
+    baseUrl: "$ATRIUM_PAYGATE_BASE_URL:http://localhost:8090"
+    apiKey: "$ATRIUM_PAYGATE_API_KEY:dev-key"
+    timeoutSeconds: 5
+  jobs:
+    expireIntervalSeconds: 30
+    outboxIntervalMillis: 500
+    expireBatchSize: 100
+  redis:
+    url: "$ATRIUM_REDIS_URL:redis://localhost:6379"
+  kafka:
+    bootstrap: "$ATRIUM_KAFKA_BOOTSTRAP:localhost:9092"
+  notify:
+    baseUrl: "$ATRIUM_NOTIFY_BASE_URL:http://localhost:8091"
+    apiKey: "$ATRIUM_NOTIFY_API_KEY:dev-key"
+    workers: 5
+  telemetry:
+    otlpEndpoint: "$ATRIUM_OTLP_ENDPOINT:http://localhost:4318"
+    traceSampling: "$ATRIUM_TRACE_SAMPLING:0.1"
+    excludedPaths: "$ATRIUM_OTEL_EXCLUDED_PATHS:/healthz,/metrics"
+  features:
+    redisRateLimit: false
+    jooqReads: false
+    noShowDetection: false

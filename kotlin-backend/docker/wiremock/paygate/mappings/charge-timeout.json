@@ -1,0 +1,5 @@
+{
+  "priority": 1,
+  "request": { "method": "POST", "urlPath": "/v1/charges", "headers": { "X-Atrium-Scenario": { "equalTo": "timeout" } } },
+  "response": { "status": 503, "fixedDelayMilliseconds": 6000 }
+}

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/bookings",
+    "body": { "roomId": "00000000-0000-0000-0000-000000000101", "startsAt": "2026-10-02T10:00:00Z", "durationMinutes": 60 }
+  },
+  "expectedStatus": 201,
+  "expectedBody": {
+    "id": "<uuid>",
+    "roomId": "00000000-0000-0000-0000-000000000101",
+    "memberId": "<uuid>",
+    "startsAt": "2026-10-02T10:00:00Z",
+    "endsAt": "2026-10-02T11:00:00Z",
+    "status": "PENDING",
+    "expiresAt": "2026-10-01T09:15:00Z",
+    "createdAt": "2026-10-01T09:00:00Z"
+  }
+}

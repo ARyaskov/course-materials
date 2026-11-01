@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/bookings",
+    "body": { "roomId": "00000000-0000-0000-0000-000000000101", "startsAt": "2026-09-01T10:00:00Z", "durationMinutes": 60 }
+  },
+  "expectedStatus": 422,
+  "expectedBody": { "type": "https://atrium.dev/problems/slot-in-past", "status": 422 }
+}

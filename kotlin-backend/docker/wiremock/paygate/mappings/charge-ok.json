@@ -1,0 +1,10 @@
+{
+  "priority": 10,
+  "request": { "method": "POST", "urlPath": "/v1/charges", "bodyPatterns": [{ "matchesJsonPath": "$[?(@.amount < 100000)]" }] },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "id": "pay_{{randomValue length=8 type='ALPHANUMERIC'}}", "status": "CHARGED" },
+    "fixedDelayMilliseconds": 150
+  }
+}

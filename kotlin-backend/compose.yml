@@ -1,0 +1,133 @@
+# Локальное окружение Atrium (урок 15.3): docker compose up -d --wait
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: atrium
+      POSTGRES_USER: atrium
+      POSTGRES_PASSWORD: atrium
+    ports: ["${ATRIUM_PG_PORT:-5432}:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atrium -d atrium"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:4.1.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: -Xmx512m
+    ports: ["29092:29092"]
+    deploy:
+      resources:
+        limits: { memory: 1g }
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:8
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+
+  paygate:
+    image: wiremock/wiremock:3
+    command: ["--global-response-templating", "--verbose"]
+    volumes:
+      - ./docker/wiremock/paygate:/home/wiremock:ro
+    ports: ["8090:8080"]
+
+  notify:
+    image: wiremock/wiremock:3
+    volumes:
+      - ./docker/wiremock/notify:/home/wiremock:ro
+    ports: ["8091:8080"]
+
+  app-ktor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ktor
+    profiles: ["app"]
+    env_file: .env.local
+    environment:
+      ATRIUM_ENV: dev
+      ATRIUM_LOG_FORMAT: JSON
+      ATRIUM_DATABASE_URL: jdbc:postgresql://postgres:5432/atrium
+      ATRIUM_KAFKA_BOOTSTRAP: kafka:9092
+      ATRIUM_REDIS_URL: redis://redis:6379
+      ATRIUM_PAYGATE_BASE_URL: http://paygate:8080
+      ATRIUM_NOTIFY_BASE_URL: http://notify:8080
+      ATRIUM_OTLP_ENDPOINT: http://otel-collector:4318
+    ports: ["8081:8081"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["/usr/local/bin/busybox", "wget", "-qO-", "http://localhost:8081/readyz"]
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+
+  atrium-worker:
+    image: ghcr.io/atrium-app/atrium-spring:${ATRIUM_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring
+    profiles: ["worker"]
+    command: ["--spring.profiles.active=backfill", "--run-id=${ATRIUM_BACKFILL_RUN:-util-local}", "--from=2026-01-01T00:00:00Z"]
+    env_file: .env.local
+    environment:
+      ATRIUM_DATABASE_URL: jdbc:postgresql://postgres:5432/atrium
+      ATRIUM_KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.135.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./docker/otel-collector.yaml:/etc/otel/config.yaml:ro
+    ports: ["4317:4317", "4318:4318"]
+
+  jaeger:
+    image: jaegertracing/jaeger:2.11.0
+    profiles: ["observability"]
+    ports: ["16686:16686"]
+
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    profiles: ["observability"]
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9090:9090"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    profiles: ["observability"]
+    ports: ["3000:3000"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+
+volumes:
+  pgdata:

@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1.7
+FROM eclipse-temurin:25-jdk AS build
+WORKDIR /src
+COPY gradlew settings.gradle.kts gradle.properties build.gradle.kts ./
+COPY gradle ./gradle
+COPY build-logic ./build-logic
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon dependencies > /dev/null
+COPY domain ./domain
+COPY application ./application
+COPY infrastructure ./infrastructure
+COPY app-ktor ./app-ktor
+ARG VERSION=dev
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon -Pversion=$VERSION :app-ktor:installDist -x test
+
+FROM eclipse-temurin:25-jre AS runtime
+RUN groupadd --system atrium && useradd --system --gid atrium --no-create-home atrium
+WORKDIR /app
+# lib/ — зависимости, отдельный слой; jar приложения — последним
+# статический busybox — единственная утилита в runtime-образе, нужна для healthcheck в Compose (урок 15.2)
+COPY --from=busybox:1.37-uclibc /bin/busybox /usr/local/bin/busybox
+COPY --from=build --chown=atrium:atrium /src/app-ktor/build/install/app-ktor/lib/ ./lib/
+USER atrium
+# --dry-run: DI собирается без внешних сервисов, процесс завершается — архив CDS
+RUN java -XX:ArchiveClassesAtExit=app.jsa -cp "lib/*" dev.atrium.ktor.ApplicationKt --dry-run
+ENV JAVA_TOOL_OPTIONS="-XX:SharedArchiveFile=app.jsa -XX:MaxRAMPercentage=75 -XX:+UseZGC -XX:+ExitOnOutOfMemoryError"
+ARG VERSION=dev
+ENV ATRIUM_VERSION=$VERSION
+EXPOSE 8081
+HEALTHCHECK --interval=10s --timeout=3s --start-period=60s --retries=3 CMD ["/usr/local/bin/busybox", "wget", "-qO-", "http://localhost:8081/readyz"]
+# exec-форма: JVM — PID 1, SIGTERM доходит до graceful shutdown (урок 14.5)
+ENTRYPOINT ["java", "-cp", "lib/*", "dev.atrium.ktor.ApplicationKt"]

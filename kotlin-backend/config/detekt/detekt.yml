@@ -1,0 +1,54 @@
+# Настройки поверх default-detekt-config.yml (buildUponDefaultConfig = true)
+build:
+  maxIssues: 0
+
+complexity:
+  LongParameterList:
+    functionThreshold: 7
+    constructorThreshold: 8   # data class с полями модели — норма
+    ignoreDefaultParameters: true
+  TooManyFunctions:
+    thresholdInClasses: 20
+    ignorePrivate: true
+  CyclomaticComplexMethod:
+    threshold: 15
+    ignoreSimpleWhenEntries: true   # exhaustive when по sealed-иерархии — не сложность
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  ReturnCount:
+    max: 4
+    excludeGuardClauses: true       # ?: return в начале функции — идиома, а не запах
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotation: true
+  UnusedPrivateMember:
+    active: true
+  ForbiddenComment:
+    active: false
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true                    # каждый !! — обсуждение на ревью
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ["Test", "ParameterizedTest"]   # имена тестов в обратных кавычках
+
+# Набор правил Atrium из модуля detekt-rules (урок 16.3)
+atrium:
+  RunBlockingInProduction:
+    active: true
+  SwallowedCancellation:
+    active: true
+  DataClassEntity:
+    active: true
+
+style:
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'java.util.Optional'
+        reason: 'В домене и use case-ах — T? (team guide)'

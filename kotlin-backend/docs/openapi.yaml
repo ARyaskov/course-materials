@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: Atrium API
+  version: "1"
+  description: Бронирование переговорных и рабочих мест в сети коворкингов. Генерируется из app-spring; проверяется OpenApiContractTest.
+servers:
+  - url: /
+paths:
+  /api/v1/rooms/{id}:
+    get:
+      summary: Комната
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Комната, content: { application/json: { schema: { $ref: '#/components/schemas/RoomResponse' } } } }
+        '400': { description: id не UUID }
+        '404': { description: Не найдена, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+  /api/v1/rooms/{id}/occupancy/stream:
+    get:
+      summary: Живая занятость комнаты (SSE)
+      responses:
+        '200': { description: text/event-stream с событиями occupancy }
+  /api/v1/bookings:
+    get:
+      summary: Брони текущего участника
+      parameters:
+        - { name: status, in: query, schema: { type: array, items: { type: string, enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED, NO_SHOW] } } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: sort, in: query, schema: { type: string, default: "createdAt:desc" } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        '200': { description: Страница, content: { application/json: { schema: { $ref: '#/components/schemas/BookingPage' } } } }
+    post:
+      summary: Создать бронь
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Бронь создана
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400': { description: Ошибка формы запроса, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+        '409': { description: Слот занят, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+        '422':
+          description: Слот в прошлом
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /api/v1/bookings/{id}/confirm:
+    post:
+      summary: Подтвердить бронь (депозит через PayGate)
+      responses:
+        '200': { description: Подтверждена или уже была подтверждена }
+        '402': { description: Депозит отклонён }
+        '409': { description: Недопустимый переход }
+        '410': { description: Холд истёк }
+  /api/v1/bookings/{id}/cancel:
+    post:
+      summary: Отменить бронь
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CancelBookingRequest' } } }
+      responses:
+        '200': { description: Отменена }
+        '403': { description: Не владелец }
+        '404': { description: Не найдена }
+        '409': { description: Недопустимый переход }
+components:
+  schemas:
+    CreateBookingRequest:
+      type: object
+      required: [roomId, startsAt]
+      properties:
+        roomId: { type: string }
+        startsAt: { type: string, format: date-time }
+        durationMinutes: { type: integer, format: int32, default: 60, minimum: 15, maximum: 480 }
+        comment: { type: string, nullable: true, maxLength: 500 }
+    CancelBookingRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, maxLength: 200 }
+    BookingResponse:
+      type: object
+      required: [id, roomId, memberId, startsAt, endsAt, status, createdAt]
+      properties:
+        id: { type: string }
+        roomId: { type: string }
+        memberId: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        status: { type: string, enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED, NO_SHOW] }
+        expiresAt: { type: string, format: date-time, nullable: true }
+        paymentId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    BookingPage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/BookingResponse' } }
+        nextCursor: { type: string }
+    RoomResponse:
+      type: object
+      required: [id, locationId, name, capacity, pricePerHour, amenities]
+      properties:
+        id: { type: string }
+        locationId: { type: string }
+        name: { type: string }
+        capacity: { type: integer }
+        pricePerHour: { type: string, example: "1500.00 RUB" }
+        amenities: { type: array, items: { type: string } }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties: { field: { type: string }, code: { type: string }, message: { type: string } }
+        errorId: { type: string }

@@ -1,0 +1,35 @@
+<configuration>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"atrium-ktor","env":"${ATRIUM_ENV:-dev}","version":"${ATRIUM_VERSION:-dev}"}</customFields>
+            <fieldNames><timestamp>@timestamp</timestamp><version>[ignore]</version></fieldNames>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>memberId</includeMdcKeyName>
+            <includeMdcKeyName>eventId</includeMdcKeyName>
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>20</maxDepthPerThrowable>
+                <exclude>^sun\.reflect\..*</exclude>
+                <exclude>^kotlinx\.coroutines\..*</exclude>
+            </throwableConverter>
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <defaultMask>***</defaultMask>
+                <path>email</path>
+                <path>phone</path>
+                <path>authorization</path>
+                <path>apiKey</path>
+                <value>\d{16}</value>
+            </jsonGeneratorDecorator>
+        </encoder>
+    </appender>
+    <appender name="TEXT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%d{HH:mm:ss.SSS} %-5level [%X{requestId:--}] %logger{24} - %msg %kvp%n</pattern></encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="${ATRIUM_LOG_FORMAT:-TEXT}"/>
+    </root>
+    <logger name="org.apache.kafka" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="dev.atrium" level="${ATRIUM_LOG_LEVEL:-INFO}"/>
+</configuration>

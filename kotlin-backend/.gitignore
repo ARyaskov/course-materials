@@ -1,0 +1,45 @@
+# Build outputs, caches and profiling data
+.gradle/
+.kotlin/
+build/
+out/
+target/
+dist/
+.cache/
+reports/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.jsa
+*.jfr
+*.hprof
+hs_err_pid*
+logs/
+*.log
+*.log.*
+
+# Local configuration and credentials
+.env
+.env.*
+*.env
+!.env.example
+!.env.sample
+compose.override.yml
+compose.override.yaml
+local.properties
+gradle.local.properties
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Local editor and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Public API baselines and generated jOOQ sources are intentionally retained

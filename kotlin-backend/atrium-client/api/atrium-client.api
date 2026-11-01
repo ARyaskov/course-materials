@@ -1,0 +1,21 @@
+# Снимок публичного API (binary-compatibility-validator, урок 16.5): удалённая строка — breaking change → major-версия.
+# Обновляется ./gradlew :atrium-client:apiDump; проверяется apiCheck в CI.
+public final class dev/atrium/client/AtriumClient : java/lang/AutoCloseable {
+	public static final field Companion Ldev/atrium/client/AtriumClient$Companion;
+	public static final field DEFAULT_TIMEOUT Ljava/time/Duration;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/time/Duration;Ljava/net/http/HttpClient;)V
+	public fun close ()V
+	public final fun confirmBooking (Lkotlin/uuid/Uuid;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun confirmBookingAsync (Lkotlin/uuid/Uuid;)Ljava/util/concurrent/CompletableFuture;
+	public final fun confirmBookingBlocking (Lkotlin/uuid/Uuid;)Ldev/atrium/client/BookingResult;
+	public final fun createBooking (Ldev/atrium/client/CreateBookingRequest;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun createBookingAsync (Ldev/atrium/client/CreateBookingRequest;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
+	public final fun createBookingBlocking (Ldev/atrium/client/CreateBookingRequest;Ljava/lang/String;)Ldev/atrium/client/BookingResult;
+	public static final fun fromEnvironment ()Ldev/atrium/client/AtriumClient;
+	public final fun listBookings (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun listBookingsBlocking (Ljava/util/List;)Ljava/util/List;
+	public final fun occupancy (Lkotlin/uuid/Uuid;)Lkotlinx/coroutines/flow/Flow;
+	public final fun subscribeOccupancy (Lkotlin/uuid/Uuid;Ljava/util/function/Consumer;)Ljava/lang/AutoCloseable;
+}

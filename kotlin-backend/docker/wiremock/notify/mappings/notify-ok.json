@@ -1,0 +1,5 @@
+{
+  "priority": 10,
+  "request": { "method": "POST", "urlPath": "/v1/notifications" },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "jsonBody": { "accepted": true } }
+}

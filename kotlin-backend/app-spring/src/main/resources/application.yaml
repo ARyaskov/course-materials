@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: atrium
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${ATRIUM_DATABASE_URL:jdbc:postgresql://localhost:5432/atrium}
+    username: ${ATRIUM_DATABASE_USER:atrium}
+    password: ${ATRIUM_DATABASE_PASSWORD:atrium}
+    hikari:
+      maximum-pool-size: ${ATRIUM_DATABASE_POOL_SIZE:15}
+      connection-timeout: 3000
+      connection-init-sql: "SET statement_timeout = '5s'; SET idle_in_transaction_session_timeout = '30s'"   # урок 17.4
+  flyway:
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+    apiversion:
+      use:
+        path-segment: 1
+      default-version: "1"
+      supported: ["1"]
+  kafka:
+    bootstrap-servers: ${ATRIUM_KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: dev.atrium.infrastructure.events
+    listener:
+      ack-mode: manual
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+
+atrium:
+  booking:
+    hold-ttl: 15m
+    no-show-grace: 15m
+    expire-batch-size: 100
+  paygate:
+    base-url: ${ATRIUM_PAYGATE_BASE_URL:http://localhost:8090}
+    api-key: ${ATRIUM_PAYGATE_API_KEY:dev-key}
+    timeout: 5s
+  notify:
+    base-url: ${ATRIUM_NOTIFY_BASE_URL:http://localhost:8091}
+    api-key: ${ATRIUM_NOTIFY_API_KEY:dev-key}
+    batch-size: 20
+    workers: 5
+  database:
+    pool-size: ${ATRIUM_DATABASE_POOL_SIZE:15}
+  redis:
+    url: ${ATRIUM_REDIS_URL:redis://localhost:6379}
+  jobs:
+    expire-interval: 30s
+    outbox-interval: 500ms
+
+logging:
+  structured:
+    format:
+      console: ${ATRIUM_LOG_FORMAT:}   # пусто локально, ecs в контейнере
+    ecs:
+      service:
+        name: atrium-spring
+        environment: ${ATRIUM_ENV:dev}
+  level:
+    org.apache.kafka: warn
+    com.zaxxer.hikari: warn
+
+management:
+  server:
+    port: 8081
+  opentelemetry:
+    resource-attributes:
+      service.name: atrium-spring
+      deployment.environment: ${ATRIUM_ENV:dev}
+  tracing:
+    sampling:
+      probability: ${ATRIUM_TRACE_SAMPLING:0.1}
+  otlp:
+    tracing:
+      endpoint: ${ATRIUM_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+      group:
+        readiness:
+          include: readinessState, db, kafkaConsumer
+        liveness:
+          include: livenessState
+
+---
+spring:
+  config:
+    activate:
+      on-profile: backfill
+  main:
+    web-application-type: none
+  kafka:
+    listener:
+      auto-startup: false
+atrium:
+  jobs:
+    expire-interval: 1000d
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+atrium:
+  paygate:
+    base-url: http://localhost:8090
+    api-key: dev-key

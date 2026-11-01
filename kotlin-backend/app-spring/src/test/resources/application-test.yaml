@@ -1,0 +1,10 @@
+spring:
+  flyway:
+    locations: classpath:db/migration, classpath:db/testdata
+atrium:
+  paygate:
+    base-url: http://paygate.test
+    api-key: test
+  notify:
+    base-url: http://notify.test
+    api-key: test

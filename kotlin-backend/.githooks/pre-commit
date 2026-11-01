@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# git config core.hooksPath .githooks — ktlint на изменённых файлах до CI (урок 15.4)
+set -e
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.kts?$' || true)
+[ -z "$files" ] && exit 0
+./gradlew -q ktlintCheck -PktlintFiles="$(echo "$files" | tr '\n' ',')" || { echo "ktlint failed; run ./gradlew ktlintFormat"; exit 1; }
