@@ -1,0 +1,43 @@
+<!-- Pulse: хранение системных журналов (глава 12).
+     Каталог config/config.d примонтирован в /etc/clickhouse-server/config.d; применяется при старте сервера. -->
+<clickhouse>
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_log>
+    <query_views_log>
+        <database>system</database>
+        <table>query_views_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+    </query_views_log>
+    <part_log>
+        <database>system</database>
+        <table>part_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+    </part_log>
+    <processors_profile_log>
+        <database>system</database>
+        <table>processors_profile_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+    </processors_profile_log>
+    <metric_log>
+        <database>system</database>
+        <table>metric_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 14 DAY DELETE</ttl>
+        <collect_interval_milliseconds>1000</collect_interval_milliseconds>
+    </metric_log>
+    <text_log>
+        <database>system</database>
+        <table>text_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
+        <level>information</level>
+    </text_log>
+</clickhouse>

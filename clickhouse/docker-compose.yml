@@ -1,0 +1,24 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3
+    container_name: pulse-clickhouse
+    ports:
+      - "127.0.0.1:8123:8123"   # HTTP-интерфейс
+      - "127.0.0.1:9000:9000"   # native-протокол
+      - "127.0.0.1:8443:8443"   # HTTPS (глава 17; нужен config/config.d/security.xml и scripts/gen_certs.sh)
+      - "127.0.0.1:9440:9440"   # native поверх TLS
+    volumes:
+      - ./data:/var/lib/clickhouse
+      - ./config/users.d:/etc/clickhouse-server/users.d
+      - ./config/config.d:/etc/clickhouse-server/config.d   # серверные настройки: журналы (глава 12)
+      - ./config/certs:/etc/clickhouse-server/certs         # сертификаты TLS (глава 17)
+      - ./ingestion/files:/var/lib/clickhouse/user_files/pulse   # файлы для file() (глава 6)
+    environment:
+      CLICKHOUSE_DB: pulse
+      CLICKHOUSE_USER: analyst
+      CLICKHOUSE_PASSWORD: analyst
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144

@@ -1,0 +1,2 @@
+clickhouse-connect>=0.8
+# Для режима --kafka дополнительно: pip install confluent-kafka>=2.5

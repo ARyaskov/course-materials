@@ -1,0 +1,86 @@
+// CourseFlow Nest API — data model.
+// See chapter 09 ("PostgreSQL и Prisma") of the course for the narrative.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  instructor
+  admin
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  displayName  String
+  passwordHash String
+  role         Role         @default(student)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  courses      Course[]     @relation("CourseOwner")
+  enrollments  Enrollment[]
+
+  @@map("users")
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  ownerId     String
+  owner       User         @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  title       String
+  description String       @default("")
+  priceCents  Int          @default(0)
+  status      CourseStatus @default(draft)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  publishedAt DateTime?
+
+  lessons     Lesson[]
+  enrollments Enrollment[]
+
+  @@unique([ownerId, title])
+  @@index([status])
+  @@map("courses")
+}
+
+model Lesson {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   @default("")
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, position])
+  @@index([courseId])
+  @@map("lessons")
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("enrollments")
+}

@@ -1,0 +1,46 @@
+<!-- Pulse: защищённые порты, маскирование журнала, журнал сессий (глава 17).
+     Сертификат — scripts/gen_certs.sh (самоподписанный, для стенда). Незащищённые порты на стенде остаются открытыми;
+     перед продакшеном их закрывают (удалить http_port/tcp_port или ограничить listen_host). -->
+<clickhouse>
+    <https_port>8443</https_port>
+    <tcp_port_secure>9440</tcp_port_secure>
+    <openSSL>
+        <server>
+            <certificateFile>/etc/clickhouse-server/certs/server.crt</certificateFile>
+            <privateKeyFile>/etc/clickhouse-server/certs/server.key</privateKeyFile>
+            <verificationMode>none</verificationMode>
+            <loadDefaultCAFile>true</loadDefaultCAFile>
+            <cacheSessions>true</cacheSessions>
+            <disableProtocols>sslv2,sslv3,tlsv1,tlsv1_1</disableProtocols>
+            <preferServerCiphers>true</preferServerCiphers>
+        </server>
+    </openSSL>
+
+    <query_masking_rules>
+        <rule>
+            <name>hide emails</name>
+            <regexp>[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}</regexp>
+            <replace>***@***</replace>
+        </rule>
+        <rule>
+            <name>hide bearer tokens</name>
+            <regexp>Bearer [A-Za-z0-9._-]+</regexp>
+            <replace>Bearer ***</replace>
+        </rule>
+    </query_masking_rules>
+
+    <session_log>
+        <database>system</database>
+        <table>session_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <ttl>event_date + INTERVAL 90 DAY DELETE</ttl>
+    </session_log>
+
+    <!-- Правила сложности паролей -->
+    <password_complexity>
+        <rule>
+            <pattern>.{12}</pattern>
+            <message>Пароль должен быть не короче 12 символов</message>
+        </rule>
+    </password_complexity>
+</clickhouse>

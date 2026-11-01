@@ -1,0 +1,11 @@
+# pnpm 11 reads build-script approvals from here.
+# Prisma legitimately needs its scripts (generate the client + fetch the query
+# engine) and argon2 needs its native binding; the telemetry packages do not.
+# This keeps `pnpm install` clean and non-interactive.
+allowBuilds:
+  '@nestjs/core': false
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  argon2: true
+  prisma: true

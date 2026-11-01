@@ -1,0 +1,71 @@
+# Pulse: мини-кластер 2 шарда × 2 реплики + 1 узел Keeper (глава 13).
+# Запуск:   cd cluster && docker compose -f docker-compose.cluster.yml up -d
+# Остановка: docker compose -f docker-compose.cluster.yml down -v
+# HTTP узлов на хосте: s1-r1 8124, s1-r2 8125, s2-r1 8126, s2-r2 8127. Учётка analyst/analyst.
+# Стенд независим от одиночного (docker-compose.yml в корне) и использует свои тома.
+
+x-clickhouse: &clickhouse
+  image: clickhouse/clickhouse-server:26.3
+  environment:
+    CLICKHOUSE_USER: analyst
+    CLICKHOUSE_PASSWORD: analyst
+    CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+  ulimits:
+    nofile: { soft: 262144, hard: 262144 }
+  depends_on:
+    - keeper
+
+services:
+  keeper:
+    image: clickhouse/clickhouse-keeper:26.3
+    container_name: pulse-keeper
+    volumes:
+      - ./config/keeper.xml:/etc/clickhouse-keeper/keeper_config.xml
+      - keeper-data:/var/lib/clickhouse-keeper
+
+  ch-s1-r1:
+    <<: *clickhouse
+    container_name: pulse-ch-s1-r1
+    hostname: ch-s1-r1
+    ports: ["127.0.0.1:8124:8123", "127.0.0.1:9001:9000"]
+    volumes:
+      - ./config/common.xml:/etc/clickhouse-server/config.d/common.xml
+      - ./config/ch-s1-r1.xml:/etc/clickhouse-server/config.d/node.xml
+      - s1r1-data:/var/lib/clickhouse
+
+  ch-s1-r2:
+    <<: *clickhouse
+    container_name: pulse-ch-s1-r2
+    hostname: ch-s1-r2
+    ports: ["127.0.0.1:8125:8123", "127.0.0.1:9002:9000"]
+    volumes:
+      - ./config/common.xml:/etc/clickhouse-server/config.d/common.xml
+      - ./config/ch-s1-r2.xml:/etc/clickhouse-server/config.d/node.xml
+      - s1r2-data:/var/lib/clickhouse
+
+  ch-s2-r1:
+    <<: *clickhouse
+    container_name: pulse-ch-s2-r1
+    hostname: ch-s2-r1
+    ports: ["127.0.0.1:8126:8123", "127.0.0.1:9003:9000"]
+    volumes:
+      - ./config/common.xml:/etc/clickhouse-server/config.d/common.xml
+      - ./config/ch-s2-r1.xml:/etc/clickhouse-server/config.d/node.xml
+      - s2r1-data:/var/lib/clickhouse
+
+  ch-s2-r2:
+    <<: *clickhouse
+    container_name: pulse-ch-s2-r2
+    hostname: ch-s2-r2
+    ports: ["127.0.0.1:8127:8123", "127.0.0.1:9004:9000"]
+    volumes:
+      - ./config/common.xml:/etc/clickhouse-server/config.d/common.xml
+      - ./config/ch-s2-r2.xml:/etc/clickhouse-server/config.d/node.xml
+      - s2r2-data:/var/lib/clickhouse
+
+volumes:
+  keeper-data:
+  s1r1-data:
+  s1r2-data:
+  s2r1-data:
+  s2r2-data:

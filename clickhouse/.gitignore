@@ -1,0 +1,21 @@
+# Данные локального ClickHouse — не коммитим
+/data/
+
+# Сброшенные на диск пакеты симулятора и архивы Parquet
+/ingestion/app/spill/
+/ingestion/files/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+
+# Секреты и сертификаты стенда
+.env
+/config/certs/
+
+# Состояние скриптов копий
+/.backup-state/
+
+# Прочее
+*.log
+.DS_Store

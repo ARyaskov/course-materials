@@ -1,0 +1,17 @@
+<!-- Pulse: профили настроек, задаваемые конфигурацией (глава 12).
+     Профиль загрузчика ingest_profile создаётся SQL-командой в ddl/ingestion.sql;
+     здесь — профиль дашборда: кэш результатов на минуту и лимиты на один запрос.
+     Привязка профилей к пользователям — в главе 17 (ddl/access.sql). -->
+<clickhouse>
+    <profiles>
+        <dashboard_profile>
+            <use_query_cache>1</use_query_cache>
+            <query_cache_ttl>60</query_cache_ttl>
+            <query_cache_min_query_runs>2</query_cache_min_query_runs>
+            <max_memory_usage>4000000000</max_memory_usage>
+            <max_execution_time>30</max_execution_time>
+            <max_threads>4</max_threads>
+            <log_comment>dashboard</log_comment>
+        </dashboard_profile>
+    </profiles>
+</clickhouse>

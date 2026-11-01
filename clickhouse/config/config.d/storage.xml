@@ -1,0 +1,34 @@
+<!-- Pulse: диск на объектном хранилище, кэш и политика многоуровневого хранения (глава 14).
+     Требует MinIO из docker-compose.s3.yml; ключи — только для стенда (в продакшене: use_environment_credentials). -->
+<clickhouse>
+    <storage_configuration>
+        <disks>
+            <s3_disk>
+                <type>s3</type>
+                <endpoint>http://minio:9000/pulse-cold/</endpoint>
+                <access_key_id>pulse</access_key_id>
+                <secret_access_key>pulse-secret</secret_access_key>
+                <metadata_path>/var/lib/clickhouse/disks/s3_disk/</metadata_path>
+            </s3_disk>
+            <s3_cache>
+                <type>cache</type>
+                <disk>s3_disk</disk>
+                <path>/var/lib/clickhouse/disks/s3_cache/</path>
+                <max_size>5Gi</max_size>
+            </s3_cache>
+        </disks>
+        <policies>
+            <tiered>
+                <volumes>
+                    <hot>
+                        <disk>default</disk>
+                    </hot>
+                    <cold>
+                        <disk>s3_cache</disk>
+                    </cold>
+                </volumes>
+                <move_factor>0.1</move_factor>
+            </tiered>
+        </policies>
+    </storage_configuration>
+</clickhouse>

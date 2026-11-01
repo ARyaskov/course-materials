@@ -1,0 +1,42 @@
+# Pulse: объектное хранилище MinIO для холодного тома и озера данных (глава 14).
+# Запуск вместе с основным стендом (после чего перезапустить ClickHouse, чтобы он прочитал storage.xml):
+#   docker compose -f docker-compose.yml -f docker-compose.s3.yml up -d
+#   docker compose restart clickhouse
+# Веб-интерфейс MinIO: http://localhost:9001 (pulse / pulse-secret). Учётные данные — только для стенда.
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: pulse-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:9000:9000"   # S3 API (native-порт ClickHouse 9000 на хосте при этом не пробрасывается — см. ниже)
+      - "127.0.0.1:9001:9001"   # консоль
+    environment:
+      MINIO_ROOT_USER: pulse
+      MINIO_ROOT_PASSWORD: pulse-secret
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: pulse-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 pulse pulse-secret; do sleep 1; done;
+      mc mb --ignore-existing local/pulse-cold;
+      mc mb --ignore-existing local/pulse-lake;
+      mc mb --ignore-existing local/pulse-backups;
+      echo buckets ready"
+
+  clickhouse:
+    # Конфликт портов: S3 API MinIO занимает 9000 на хосте, native-порт ClickHouse переносится на 9010
+    ports: !override
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9010:9000"
+    depends_on:
+      - minio-init
+
+volumes:
+  minio-data:

@@ -1,0 +1,22 @@
+<!-- Pulse: намеренно изменённые серверные настройки (глава 18). Каждая — с причиной.
+     Проверка: SELECT name, value FROM system.server_settings WHERE changed; -->
+<clickhouse>
+    <!-- Стенд: половина памяти хоста серверу, чтобы MinIO, Kafka и симулятор не голодали.
+         На выделенном сервере — 0.8–0.9. -->
+    <max_server_memory_usage_to_ram_ratio>0.5</max_server_memory_usage_to_ram_ratio>
+
+    <!-- Слияния таблиц с проекциями и индексами дороже: пул увеличен после наблюдения очереди (глава 11).
+         Умолчание 16; на стенде с 8 ядрами — не выше 16. -->
+    <background_pool_size>16</background_pool_size>
+
+    <!-- Лимит одновременных запросов сервера; профили ролей ограничивают по пользователю (глава 17). -->
+    <max_concurrent_queries>100</max_concurrent_queries>
+
+    <!-- Кэш засечек: таблиц и кусков на стенде немного; в продакшене — по числу кусков и памяти. -->
+    <mark_cache_size>1073741824</mark_cache_size>
+
+    <merge_tree>
+        <!-- Удаление по TTL целыми кусками: партиции по времени однородны, переписывание не нужно (глава 14). -->
+        <ttl_only_drop_parts>1</ttl_only_drop_parts>
+    </merge_tree>
+</clickhouse>

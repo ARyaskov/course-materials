@@ -1,0 +1,31 @@
+<!-- Pulse: общая конфигурация кластера для всех узлов (глава 13). -->
+<clickhouse>
+    <listen_host>0.0.0.0</listen_host>
+
+    <remote_servers>
+        <pulse_cluster>
+            <!-- Общий секрет: распределённые запросы выполняются на шардах от имени инициирующего пользователя -->
+            <secret>pulse-cluster-secret</secret>
+            <shard>
+                <!-- Вставка через Distributed идёт на одну реплику; остальным доставит репликация -->
+                <internal_replication>true</internal_replication>
+                <replica><host>ch-s1-r1</host><port>9000</port></replica>
+                <replica><host>ch-s1-r2</host><port>9000</port></replica>
+            </shard>
+            <shard>
+                <internal_replication>true</internal_replication>
+                <replica><host>ch-s2-r1</host><port>9000</port></replica>
+                <replica><host>ch-s2-r2</host><port>9000</port></replica>
+            </shard>
+        </pulse_cluster>
+    </remote_servers>
+
+    <!-- Координатор: ClickHouse Keeper (секция сохраняет историческое имя zookeeper) -->
+    <zookeeper>
+        <node><host>keeper</host><port>9181</port></node>
+    </zookeeper>
+
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
+</clickhouse>

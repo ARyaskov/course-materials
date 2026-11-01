@@ -1,0 +1,42 @@
+# Local infrastructure for CourseFlow Nest API.
+# Usage:
+#   docker compose up -d        # start Postgres + Redis
+#   pnpm prisma:migrate         # apply migrations
+#   pnpm start:dev              # run the API
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: courseflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: courseflow
+      POSTGRES_PASSWORD: courseflow
+      POSTGRES_DB: courseflow
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - courseflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courseflow -d courseflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: courseflow-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - courseflow_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  courseflow_pgdata:
+  courseflow_redisdata:

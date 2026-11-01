@@ -1,0 +1,30 @@
+# dependencies
+node_modules
+
+# build output
+dist
+build
+
+# prisma generated client (regenerated via postinstall)
+# (kept out of VCS; run `pnpm prisma generate`)
+
+# env
+.env
+# .env.test is committed on purpose: tests must run out of the box.
+!.env.test
+.env.local
+*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# test / coverage
+coverage
+
+# editor / OS
+.idea
+.vscode
+.DS_Store
+Thumbs.db
