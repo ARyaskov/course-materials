@@ -1,0 +1,35 @@
+# Generated demonstration logs, indexes and reports.
+build/
+dist/
+data/*.ndjson
+*.sidx
+
+# Native modules, objects, Lua bytecode and packaged rocks.
+*.so
+*.dylib
+*.dll
+*.o
+*.obj
+*.a
+*.lib
+*.luac
+*.rock
+luac.out
+*.out
+
+# Local logs, environment files and credentials.
+*.log
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editor and operating system files.
+.idea/
+.vscode/
+.DS_Store
+._*

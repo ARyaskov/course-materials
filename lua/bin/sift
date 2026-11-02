@@ -1,0 +1,23 @@
+#!/usr/bin/env lua
+--- Точка входа. Делает ровно три вещи: находит библиотеку, передаёт
+-- аргументы в cli.run и превращает возвращённый код в код возврата процесса.
+-- Коды: 0 — успех, 1 — ошибка выполнения, 2 — ошибка в аргументах,
+-- 3 — цели SLO нарушены (отдельный код, чтобы CI мог их различать).
+
+local here = arg[0]:match("^(.*)[/\\][^/\\]*$") or "."
+package.path = table.concat({
+  here .. "/../src/?.lua",
+  here .. "/../src/?/init.lua",
+  package.path,
+}, ";")
+
+local ok, result = pcall(function()
+  return require("sift.cli").run(arg)
+end)
+
+if not ok then
+  io.stderr:write("sift: внутренняя ошибка: ", tostring(result), "\n")
+  os.exit(1)
+end
+
+os.exit(result or 0)
