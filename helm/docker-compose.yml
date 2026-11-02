@@ -1,0 +1,61 @@
+services:
+  api:
+    build: ./app
+    environment:
+      TESSERA_DATABASE_DSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+      TESSERA_REDIS_ADDR: redis:6379
+      TESSERA_TICKET_SIGN_KEY: dev-only-key
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: ./app
+    entrypoint: ["/app/worker"]
+    environment:
+      TESSERA_DATABASE_DSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+      TESSERA_REDIS_ADDR: redis:6379
+      TESSERA_TICKET_SIGN_KEY: dev-only-key
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  migrate:
+    build: ./app
+    entrypoint: ["/app/migrate"]
+    command: ["up"]
+    environment:
+      TESSERA_DATABASE_DSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tessera
+      POSTGRES_PASSWORD: tessera
+      POSTGRES_DB: tessera
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tessera"]
+      interval: 2s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  pgdata:

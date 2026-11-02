@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tessera-worker
+  labels:
+    app.kubernetes.io/name: tessera
+    app.kubernetes.io/instance: tessera
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tessera
+      app.kubernetes.io/instance: tessera
+      app.kubernetes.io/component: worker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tessera
+        app.kubernetes.io/instance: tessera
+        app.kubernetes.io/component: worker
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: worker
+          image: tessera:dev
+          imagePullPolicy: IfNotPresent
+          command: ["/app/worker"]
+          env:
+            - name: TESSERA_ENV
+              value: dev
+            - name: TESSERA_LOG_LEVEL
+              value: debug
+            - name: TESSERA_DATABASE_DSN
+              value: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+            - name: TESSERA_REDIS_ADDR
+              value: redis:6379
+            - name: TESSERA_TICKET_SIGN_KEY
+              value: dev-only-key
+            - name: TESSERA_SHUTDOWN_GRACE
+              value: 20s
+          livenessProbe:
+            exec:
+              command: ["/app/worker", "-healthcheck"]
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi

@@ -1,0 +1,51 @@
+suite: migration hooks
+templates:
+  - migration-job.yaml
+  - preflight-job.yaml
+set:
+  secrets.databaseDSN: postgres://u:p@h:5432/d
+  secrets.ticketSignKey: test-only-key
+tests:
+  - it: миграция не зависит от обычных ресурсов релиза
+    template: migration-job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/migrate", "up"]
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: postgres://u:p@h:5432/d
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+      - notExists:
+          path: spec.template.spec.serviceAccountName
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+  - it: внешний Secret используется до создания ресурсов релиза
+    template: preflight-job.yaml
+    set:
+      secrets.create: false
+      secrets.existingSecret: tessera-ci-secrets
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: tessera-ci-secrets
+      - notExists:
+          path: spec.template.spec.containers[0].env[0].value
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/migrate", "check"]
+  - it: preflight выключается отдельно
+    template: preflight-job.yaml
+    set:
+      migrations.preflight: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: миграции выключаются целиком
+    set:
+      migrations.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

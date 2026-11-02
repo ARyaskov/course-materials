@@ -1,0 +1,6 @@
+dependencies:
+- name: tessera
+  repository: file://../tessera
+  version: 0.6.0
+digest: sha256:b71ea6e248839ba604b9d2d4ed9c375d2462083163dbd438939c7f9c994f1cca
+generated: "2026-09-10T14:56:34.363179156+03:00"

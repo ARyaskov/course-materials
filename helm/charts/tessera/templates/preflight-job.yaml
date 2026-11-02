@@ -1,0 +1,50 @@
+{{- if and .Values.migrations.enabled .Values.migrations.preflight }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "tessera.fullname" . }}-preflight-{{ .Release.Revision }}
+  labels:
+    {{- include "tessera.labels" . | nindent 4 }}
+    app.kubernetes.io/component: preflight
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 30
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        {{- include "tessera.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: preflight
+    spec:
+      restartPolicy: Never
+      # Hooks run before regular chart resources; no release ServiceAccount is needed.
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: preflight
+          image: {{ include "tessera.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/app/migrate", "check"]
+          env:
+            - name: TESSERA_DATABASE_DSN
+              {{- if and .Values.secrets.create (not .Values.secrets.existingSecret) }}
+              # Dev values already live in the Helm release; the Secret is not created yet.
+              value: {{ required "secrets.databaseDSN обязателен для миграций" .Values.secrets.databaseDSN | quote }}
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tessera.secretName" . }}
+                  key: TESSERA_DATABASE_DSN
+              {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

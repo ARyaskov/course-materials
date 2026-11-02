@@ -1,0 +1,36 @@
+suite: ingress
+templates:
+  - ingress.yaml
+tests:
+  - it: по умолчанию создаётся один объект
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: выключается целиком
+    set:
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: backend ссылается на порт по имени
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.name
+          value: http
+
+  - it: настраиваемый хост и путь попадают в правило
+    set:
+      ingress.hosts:
+        - host: tessera.example.com
+          paths:
+            - path: /api
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: tessera.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /api

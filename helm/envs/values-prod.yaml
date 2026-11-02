@@ -1,0 +1,71 @@
+# Production. Секреты приходят из External Secrets Operator.
+image:
+  repository: ghcr.io/tessera-app/tessera
+  pullPolicy: IfNotPresent
+
+api:
+  replicaCount: 4
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+worker:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+defaults:
+  tolerations:
+    - key: workload
+      operator: Equal
+      value: backend
+      effect: NoSchedule
+
+config:
+  env: prod
+  logLevel: info
+  redisAddr: tessera-redis.internal:6379
+  holdTTL: 10m
+  databaseMaxConn: 20
+
+secrets:
+  create: false
+  existingSecret: tessera-secrets
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: tessera.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: api
+  tls:
+    - hosts:
+        - tessera.example.com
+      secretName: tessera-tls
+
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+networkPolicy:
+  enabled: true

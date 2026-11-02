@@ -1,0 +1,9 @@
+apiVersion: v2
+name: tessera-env
+description: Полное окружение Tessera — сервис и его зависимости для стенда и превью
+type: application
+version: 0.3.0
+dependencies:
+  - name: tessera
+    version: "0.6.x"
+    repository: file://../tessera

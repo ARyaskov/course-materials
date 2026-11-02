@@ -1,0 +1,38 @@
+# Локальный стенд k3s. Секреты здесь заведомо не боевые.
+image:
+  repository: tessera
+  tag: dev
+  pullPolicy: IfNotPresent
+
+api:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+worker:
+  replicaCount: 1
+
+config:
+  env: dev
+  logLevel: debug
+  redisAddr: redis:6379
+  holdTTL: 2m
+
+secrets:
+  create: true
+  databaseDSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+  ticketSignKey: dev-only-key
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: tessera.localtest.me
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api

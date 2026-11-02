@@ -1,0 +1,16 @@
+apiVersion: v2
+name: tessera
+description: Ticket sales and validation API
+type: application
+version: 0.6.0
+appVersion: "1.4.2"
+kubeVersion: ">=1.28.0-0"
+keywords:
+  - ticketing
+  - api
+home: https://github.com/tessera-app/tessera
+sources:
+  - https://github.com/tessera-app/tessera
+maintainers:
+  - name: Tessera team
+    email: team@tessera.example.com

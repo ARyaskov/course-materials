@@ -1,0 +1,66 @@
+suite: deployment
+templates:
+  - deployment.yaml
+  - configmap.yaml
+  - secret.yaml
+tests:
+  - it: создаёт два Deployment — api и worker
+    set:
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: worker запускается своей командой
+    set:
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/worker"]
+        documentIndex: 1
+
+  - it: в селекторе нет метки версии
+    set:
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.selector.matchLabels["app.kubernetes.io/version"]
+        documentIndex: 0
+
+  - it: при включённом автомасштабировании поле replicas отсутствует у api
+    set:
+      autoscaling.enabled: true
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.replicas
+        documentIndex: 0
+
+  - it: контрольная сумма конфигурации присутствует
+    set:
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+        documentIndex: 0
+
+  - it: worker выключается флагом
+    set:
+      worker.enabled: false
+      secrets.databaseDSN: postgres://u:p@h:5432/d
+      secrets.ticketSignKey: k
+    template: deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1

@@ -1,0 +1,44 @@
+# Предпродакшн. Секретов в файле нет — только имя существующего объекта.
+image:
+  repository: ghcr.io/tessera-app/tessera
+  pullPolicy: IfNotPresent
+
+api:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+worker:
+  replicaCount: 1
+
+config:
+  env: staging
+  logLevel: info
+  redisAddr: tessera-redis.tessera-staging.svc.cluster.local:6379
+  holdTTL: 10m
+  databaseMaxConn: 15
+
+secrets:
+  create: false
+  existingSecret: tessera-secrets
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+  hosts:
+    - host: staging.tessera.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api
+  tls:
+    - hosts:
+        - staging.tessera.example.com
+      secretName: tessera-tls

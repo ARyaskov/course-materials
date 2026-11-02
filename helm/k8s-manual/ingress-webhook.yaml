@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tessera-webhook
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tessera.localtest.me
+      http:
+        paths:
+          - path: /webhooks/payments
+            pathType: Prefix
+            backend:
+              service:
+                name: tessera-api
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - tessera.localtest.me
+      secretName: tessera-tls

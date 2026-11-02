@@ -1,0 +1,10 @@
+Окружение {{ .Release.Name }} поднято в неймспейс {{ .Release.Namespace }}.
+
+Состав: сервис Tessera, его зависимости и общие объекты окружения.
+
+Проверить:
+  kubectl get all -n {{ .Release.Namespace }}
+  ./scripts/smoke.sh {{ (index .Values.tessera.ingress.hosts 0).host }}
+
+Удалить окружение целиком:
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

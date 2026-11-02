@@ -1,0 +1,48 @@
+{{- if .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "tessera.fullname" . }}-smoke
+  labels:
+    {{- include "tessera.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: smoke
+      image: {{ .Values.tests.image | quote }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      command:
+        - sh
+        - -c
+        - |
+          set -eu
+          BASE="http://{{ include "tessera.fullname" . }}-api:{{ .Values.service.port }}"
+          ADMIN="http://{{ include "tessera.fullname" . }}-api:{{ .Values.service.metricsPort }}"
+
+          echo "== список событий отвечает 200"
+          curl -sf -o /dev/null "$BASE/api/v1/events"
+
+          echo "== зависимости подключены"
+          curl -sf "$ADMIN/readyz" | grep -q '"postgres":"ok"'
+
+          echo "== метрики не торчат в публичный порт"
+          if curl -sf -o /dev/null "$BASE/metrics"; then
+            echo "/metrics доступен на публичном порту"; exit 1
+          fi
+
+          echo OK
+{{- end }}

@@ -1,0 +1,19 @@
+.git/
+.gitignore
+*.tmp
+*.orig
+.vscode/
+.idea/
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+# Юнит-тесты шаблонов и профили для chart-testing нужны при разработке чарта,
+# а не при его установке. Путь с ведущим слэшем — только корень чарта:
+# без него шаблон исключил бы и templates/tests/ с подом helm test.
+/tests/
+/ci/

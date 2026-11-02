@@ -1,0 +1,7 @@
+# Ветка с отключённым фоновым обработчиком.
+worker:
+  enabled: false
+secrets:
+  create: true
+  databaseDSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+  ticketSignKey: ci-only-key

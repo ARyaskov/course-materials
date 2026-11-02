@@ -1,0 +1,13 @@
+endpoints:
+  - path: /api/v1/events
+    rps: 200
+    burst: 400
+  - path: /api/v1/orders
+    rps: 50
+    burst: 100
+  - path: /api/v1/checkins
+    rps: 500
+    burst: 1000
+default:
+  rps: 100
+  burst: 200

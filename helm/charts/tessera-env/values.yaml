@@ -1,0 +1,27 @@
+# Umbrella для dev и превью-окружений. В staging и production не используется:
+# там ставится чарт сервиса напрямую, а база и кэш живут снаружи.
+global:
+  environment: dev
+
+tessera:
+  api:
+    replicaCount: 1
+  worker:
+    replicaCount: 1
+  config:
+    env: dev
+    logLevel: debug
+    holdTTL: 2m
+  secrets:
+    create: true
+    databaseDSN: postgres://tessera:tessera@postgres:5432/tessera?sslmode=disable
+    ticketSignKey: dev-only-key
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: tessera.localtest.me
+        paths:
+          - path: /
+            pathType: Prefix
+            service: api

@@ -1,0 +1,222 @@
+# Контракт чарта Tessera. Всё, что можно настроить, перечислено здесь.
+# Значения по умолчанию рассчитаны на локальный стенд k3s.
+
+nameOverride: ""
+fullnameOverride: ""
+revisionHistoryLimit: 5
+
+# Публичный адрес сервиса. Если пусто — берётся первый хост ingress.
+publicHost: ""
+
+image:
+  repository: ghcr.io/tessera-app/tessera
+  # Пусто → используется .Chart.AppVersion
+  tag: ""
+  # Если задан digest, ссылка строится по нему, а не по тегу.
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Порты, которые слушает приложение. Одно значение управляет и containerPort,
+# и переменной окружения, и ссылкой из Service.
+ports:
+  http: 8080
+  admin: 9090
+
+serviceAccount:
+  create: true
+  name: ""
+  automountServiceAccountToken: false
+  annotations: {}
+
+rbac:
+  create: false
+  rules: []
+
+# securityContext пода.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# securityContext контейнера, общий для обоих workload.
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: RuntimeDefault
+
+# Общие умолчания для api и worker. Секции ниже перекрывают их поштучно.
+defaults:
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+  terminationGracePeriodSeconds: 30
+
+api:
+  enabled: true
+  replicaCount: 2
+  terminationGracePeriodSeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  probes:
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: admin
+      periodSeconds: 5
+      failureThreshold: 24
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: admin
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 2
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: admin
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+  extraEnv: []
+
+worker:
+  enabled: true
+  replicaCount: 1
+  terminationGracePeriodSeconds: 30
+  # На учебном стенде достаточно одной реплики; обновляем её без перекрытия.
+  strategy:
+    type: Recreate
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: admin
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+  extraEnv: []
+  metrics:
+    enabled: false
+
+service:
+  type: ClusterIP
+  port: 80
+  metricsPort: 9090
+  exposeMetrics: true
+  loadBalancerIP: ""
+  annotations: {}
+  labels: {}
+  extraPorts: []
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations: {}
+  hosts:
+    - host: tessera.localtest.me
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api
+  tls: []
+
+extraIngresses: []
+
+# Несекретная конфигурация приложения.
+config:
+  env: dev
+  logLevel: debug
+  redisAddr: redis:6379
+  redisDB: 0
+  databaseMaxConn: 10
+  holdTTL: 10m
+  shutdownDelay: 5s
+  shutdownGrace: 20s
+  # Дополнительные ключи ConfigMap.
+  extra: {}
+  # Содержимое rate-limits.yaml; пусто → берётся files/rate-limits.yaml.
+  rateLimits: ""
+
+# Секреты. В production задаётся existingSecret, значения ниже не используются.
+secrets:
+  existingSecret: ""
+  create: true
+  databaseDSN: ""
+  redisPassword: ""
+  ticketSignKey: ""
+
+tests:
+  enabled: true
+  image: curlimages/curl:8.11.0
+  # Сценарные тесты создают данные — только для стендов, не для production.
+  scenario: false
+
+migrations:
+  enabled: true
+  # Дешёвая проверка доступности базы перед дорогой миграцией.
+  preflight: true
+  backoffLimit: 1
+  timeoutSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 8
+  targetCPUUtilizationPercentage: 70
+  # Дополнительные метрики; требуют адаптера метрик в кластере.
+  extraMetrics: []
+  # Рост быстрый, сокращение медленное — цена лишней реплики ниже цены отказа.
+  behavior: {}
+
+podDisruptionBudget:
+  enabled: false
+  # Задаётся одно из двух: minAvailable или maxUnavailable.
+  minAvailable: ""
+  maxUnavailable: 25%
+
+networkPolicy:
+  enabled: false
+  ingressControllerNamespaces: [ingress-nginx]
+  monitoringNamespaces: [monitoring]
+
+metrics:
+  separateService: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    labels: {}

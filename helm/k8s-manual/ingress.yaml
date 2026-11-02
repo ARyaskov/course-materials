@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tessera
+  labels:
+    app.kubernetes.io/name: tessera
+    app.kubernetes.io/instance: tessera
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: tessera.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tessera-api
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - tessera.localtest.me
+      secretName: tessera-tls
