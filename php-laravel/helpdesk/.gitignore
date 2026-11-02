@@ -9,8 +9,8 @@
 /storage/framework/views
 /storage/logs
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpunit.cache
 .phpunit.result.cache
 /pgdata

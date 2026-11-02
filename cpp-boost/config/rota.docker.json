@@ -1,0 +1,16 @@
+{
+  "server": { "host": "0.0.0.0", "port": 8080, "status_port": 8081 },
+  "storage": {
+    "data_dir": "/rota/data",
+    "snapshot_interval": "30s",
+    "redis_url": "redis://redis:6379",
+    "mysql_url": "mysql://rota:rota@mysql:3306/rota"
+  },
+  "executors": {
+    "plugins": ["/rota/plugins/echo_executor"],
+    "workdir_root": "/rota/data/runs"
+  },
+  "logging": { "level": "info", "json": true, "async": false },
+  "pipelines_dir": "/rota/pipelines",
+  "timezone": "UTC"
+}

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "types": [],
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false
+  },
+  "include": ["src/ui", "src/sdk", "src/domain", "src/lib", "src/api", "src/reports"],
+  "exclude": ["src/api/http-source.ts", "src/api/cached-source.ts", "dist", "node_modules"]
+}

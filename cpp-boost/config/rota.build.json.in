@@ -1,0 +1,11 @@
+{
+  "server": { "host": "127.0.0.1", "port": 8080, "status_port": 8081 },
+  "storage": { "data_dir": "data", "snapshot_interval": "30s" },
+  "executors": {
+    "plugins": ["@CMAKE_BINARY_DIR@/plugins/echo_executor/echo_executor"],
+    "workdir_root": "data/runs"
+  },
+  "logging": { "level": "info", "file": "data/logs/rotad.log" },
+  "pipelines_dir": "@CMAKE_BINARY_DIR@/demo-pipelines",
+  "timezone": "UTC"
+}

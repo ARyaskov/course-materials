@@ -1,0 +1,15 @@
+{
+  // Nightly report: extract -> transform -> load, then notify. Comments are allowed.
+  "name": "nightly-report",
+  "description": "Build the nightly usage report",
+  "schedule": "30 2 * * *",
+  "max_parallel": 2,
+  "tasks": [
+    { "name": "extract", "command": "python", "args": ["{project_dir}/scripts/extract.py"], "timeout": "10m", "expected_duration": "2m" },
+    { "name": "transform", "command": "python", "args": ["{project_dir}/scripts/transform.py"], "depends_on": ["extract"], "expected_duration": "5m",
+      "retry": { "max_attempts": 3, "backoff": "30s" } },
+    { "name": "load", "command": "python", "args": ["{project_dir}/scripts/load.py"], "depends_on": ["transform"], "env": { "TARGET": "warehouse" } },
+    { "name": "notify", "executor": "echo", "command": "report ready", "depends_on": ["load"] }
+  ],
+  "webhooks": ["http://127.0.0.1:9090/hooks/rota"]
+}

@@ -1,0 +1,28 @@
+{
+  // rotad configuration. Comments and trailing commas are accepted (Boost.JSON parse_options).
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "status_port": 8081,
+    "threads": 0
+  },
+  "storage": {
+    "data_dir": "data",
+    "snapshot_interval": "30s"
+  },
+  "executors": {
+    "plugins": ["build/mingw/plugins/echo_executor/echo_executor"],
+    "workdir_root": "data/runs",
+    "output_tail_lines": 50,
+    "max_concurrent_tasks": 8
+  },
+  "logging": {
+    "level": "info",
+    "file": "data/logs/rotad.log",
+    "rotation_size_mb": 10,
+    "json": false,
+    "async": true
+  },
+  "pipelines_dir": "pipelines",
+  "timezone": "Europe/Berlin"
+}

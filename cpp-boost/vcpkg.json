@@ -1,0 +1,19 @@
+{
+  "name": "rota",
+  "version-string": "0.1.0",
+  "description": "DAG job runner and scheduler built on Boost",
+  "dependencies": [
+    "boost-asio", "boost-beast", "boost-cobalt", "boost-url", "boost-json", "boost-describe", "boost-pfr",
+    "boost-system", "boost-leaf", "boost-outcome", "boost-exception", "boost-stacktrace", "boost-scope",
+    "boost-parser", "boost-spirit", "boost-algorithm", "boost-charconv", "boost-lexical-cast",
+    "boost-multi-index", "boost-unordered", "boost-container", "boost-circular-buffer", "boost-lockfree",
+    "boost-graph", "boost-process", "boost-dll", "boost-filesystem",
+    "boost-signals2", "boost-variant2", "boost-msm", "boost-mp11",
+    "boost-interprocess", "boost-atomic", "boost-thread",
+    "boost-log", "boost-program-options", "boost-date-time", "boost-iostreams", "boost-histogram", "boost-accumulators",
+    "boost-serialization", "boost-endian", "boost-crc", "boost-hash2", "boost-uuid",
+    "boost-redis", "boost-mysql", "boost-test",
+    "openssl", "zlib"
+  ],
+  "builtin-baseline": "9a5dfef5d1a0438a7d24856a85bd60f309d355e9"
+}

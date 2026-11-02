@@ -6,6 +6,8 @@
 /storage/framework/sessions
 /storage/logs
 .env
+.env.*
+!.env.example
 .phpunit.cache
 .phpunit.result.cache
 /pgdata

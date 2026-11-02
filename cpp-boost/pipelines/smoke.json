@@ -1,0 +1,12 @@
+{
+  "name": "smoke",
+  "description": "Quick self-check: shell commands and the echo plugin",
+  "max_parallel": 3,
+  "tasks": [
+    { "name": "hello", "command": "cmd", "args": ["/c", "echo hello from %ROTA_TASK% attempt %ROTA_ATTEMPT%"] },
+    { "name": "flaky", "command": "cmd", "args": ["/c", "exit 1"], "retry": { "max_attempts": 2, "backoff": "200ms" } },
+    { "name": "after-hello", "command": "cmd", "args": ["/c", "echo after hello"], "depends_on": ["hello"] },
+    { "name": "after-flaky", "command": "cmd", "args": ["/c", "echo never"], "depends_on": ["flaky"] },
+    { "name": "notify", "executor": "echo", "command": "smoke finished", "depends_on": ["after-hello"] }
+  ]
+}

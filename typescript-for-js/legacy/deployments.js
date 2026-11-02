@@ -1,0 +1,46 @@
+// Исходные данные проекта до перехода на TypeScript: обычный JS-массив,
+// в котором набор полей зависит от статуса, и это нигде не зафиксировано.
+
+export const deployments = [
+  {
+    id: 'dep_001',
+    environment: 'production',
+    status: 'succeeded',
+    release: { id: 'rel_140', version: '1.4.0', commit_sha: 'b71c9a4f0d3e5a71', author: 'anna.k' },
+    requested_by: 'anna.k',
+    comment: 'плановый релиз',
+    started_at: '2026-08-28T09:12:00.000Z',
+    finished_at: '2026-08-28T09:18:42.000Z',
+    duration_ms: 402000,
+  },
+  {
+    id: 'dep_002',
+    environment: 'production',
+    status: 'failed',
+    release: { id: 'rel_141', version: '1.4.1', commit_sha: '3f0aa19c77d21b04', author: 'anna.k' },
+    requested_by: 'anna.k',
+    comment: 'хотфикс биллинга',
+    started_at: '2026-08-29T11:40:10.000Z',
+    finished_at: '2026-08-29T11:44:55.000Z',
+    duration_ms: 285000,
+    reason: 'health-check не прошёл на 3 из 6 подов',
+    exit_code: 7,
+  },
+  {
+    id: 'dep_008',
+    environment: 'staging',
+    status: 'running',
+    release: { id: 'rel_160', version: '1.6.0', commit_sha: '52d7c81aef049b3d', author: 'marina.s' },
+    requested_by: 'marina.s',
+    started_at: '2026-09-01T12:15:00.000Z',
+  },
+  {
+    id: 'dep_009',
+    environment: 'production',
+    status: 'queued',
+    release: { id: 'rel_160', version: '1.6.0', commit_sha: '52d7c81aef049b3d', author: 'marina.s' },
+    requested_by: 'anna.k',
+    comment: 'ждёт подтверждения релиз-менеджера',
+    queued_at: '2026-09-01T12:30:00.000Z',
+  },
+];

@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: Shipyard API
+  version: 1.0.0
+  description: >-
+    HTTP API панели релизов и деплоев. Схемы здесь — тот же контракт,
+    что описан в src/api/schemas.ts; типы для клиента можно как генерировать
+    из этого файла, так и выводить из схем валидации.
+
+servers:
+  - url: http://127.0.0.1:8080/api
+
+paths:
+  /health:
+    get:
+      summary: Проверка живости сервиса
+      responses:
+        '200':
+          description: Сервис отвечает
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, time]
+                properties:
+                  status: { type: string, const: ok }
+                  time: { type: string, format: date-time }
+
+  /deployments:
+    get:
+      summary: Список деплоев
+      parameters:
+        - { in: query, name: environment, schema: { $ref: '#/components/schemas/Environment' } }
+        - { in: query, name: status, schema: { $ref: '#/components/schemas/DeploymentStatus' } }
+        - { in: query, name: author, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        '200':
+          description: Страница деплоев
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Deployment' }
+                  meta:
+                    oneOf:
+                      - { $ref: '#/components/schemas/PageMeta' }
+                      - { type: 'null' }
+
+  /deployments/{id}:
+    get:
+      summary: Один деплой
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, pattern: '^dep_[0-9a-z]{3,}$' }
+      responses:
+        '200':
+          description: Деплой найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Deployment' }
+        '404':
+          description: Деплой не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /summary:
+    get:
+      summary: Агрегированная сводка
+      responses:
+        '200':
+          description: Сводка по окружениям
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [total, successRate, environments]
+                properties:
+                  total: { type: integer, minimum: 0 }
+                  successRate: { type: number, minimum: 0, maximum: 1 }
+                  environments:
+                    type: array
+                    items:
+                      type: object
+                      required: [environment, total, successRate]
+                      properties:
+                        environment: { $ref: '#/components/schemas/Environment' }
+                        total: { type: integer, minimum: 0 }
+                        successRate: { type: number, minimum: 0, maximum: 1 }
+                        averageDurationMs: { type: [number, 'null'] }
+                        p95DurationMs: { type: [number, 'null'] }
+                        lastActivityAt: { type: [string, 'null'], format: date-time }
+
+components:
+  schemas:
+    Environment:
+      type: string
+      enum: [dev, staging, production]
+
+    DeploymentStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, rolled_back]
+
+    Release:
+      type: object
+      required: [id, version, commit_sha, author]
+      properties:
+        id: { type: string, pattern: '^rel_[0-9a-z]{2,}$' }
+        version: { type: string }
+        commit_sha: { type: string, pattern: '^[0-9a-f]{7,40}$' }
+        author: { type: string }
+
+    PageMeta:
+      type: object
+      required: [total, limit, offset]
+      properties:
+        total: { type: integer, minimum: 0 }
+        limit: { type: integer, minimum: 1 }
+        offset: { type: integer, minimum: 0 }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [status, message]
+          properties:
+            status: { type: integer }
+            message: { type: string }
+
+    DeploymentBase:
+      type: object
+      required: [id, environment, release, requested_by, status]
+      properties:
+        id: { type: string, pattern: '^dep_[0-9a-z]{3,}$' }
+        environment: { $ref: '#/components/schemas/Environment' }
+        release: { $ref: '#/components/schemas/Release' }
+        requested_by: { type: string }
+        comment: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/DeploymentStatus' }
+
+    Deployment:
+      description: >-
+        Размеченное объединение: набор полей зависит от статуса.
+        Тот же контракт описан в z.discriminatedUnion в src/api/schemas.ts.
+      oneOf:
+        - allOf:
+            - $ref: '#/components/schemas/DeploymentBase'
+            - type: object
+              required: [queued_at]
+              properties:
+                status: { const: queued }
+                queued_at: { type: string, format: date-time }
+        - allOf:
+            - $ref: '#/components/schemas/DeploymentBase'
+            - type: object
+              required: [started_at]
+              properties:
+                status: { const: running }
+                started_at: { type: string, format: date-time }
+        - allOf:
+            - $ref: '#/components/schemas/DeploymentBase'
+            - type: object
+              required: [started_at, finished_at, duration_ms]
+              properties:
+                status: { const: succeeded }
+                started_at: { type: string, format: date-time }
+                finished_at: { type: string, format: date-time }
+                duration_ms: { type: integer, minimum: 0 }
+        - allOf:
+            - $ref: '#/components/schemas/DeploymentBase'
+            - type: object
+              required: [started_at, finished_at, duration_ms, reason, exit_code]
+              properties:
+                status: { const: failed }
+                started_at: { type: string, format: date-time }
+                finished_at: { type: string, format: date-time }
+                duration_ms: { type: integer, minimum: 0 }
+                reason: { type: string }
+                exit_code: { type: integer }
+        - allOf:
+            - $ref: '#/components/schemas/DeploymentBase'
+            - type: object
+              required: [started_at, finished_at, duration_ms, reverted_to]
+              properties:
+                status: { const: rolled_back }
+                started_at: { type: string, format: date-time }
+                finished_at: { type: string, format: date-time }
+                duration_ms: { type: integer, minimum: 0 }
+                reverted_to: { type: string, pattern: '^rel_[0-9a-z]{2,}$' }
+      discriminator:
+        propertyName: status

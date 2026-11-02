@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shipyard — доска деплоев</title>
+    <link rel="stylesheet" href="/board.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>Shipyard</h1>
+      <p>Панель релизов и деплоев — сквозной проект курса</p>
+    </header>
+
+    <main>
+      <form id="filters" class="filters">
+        <label>
+          Окружение
+          <select name="environment">
+            <option value="">все</option>
+            <option value="dev">dev</option>
+            <option value="staging">staging</option>
+            <option value="production">production</option>
+          </select>
+        </label>
+
+        <label>
+          Статус
+          <select name="status">
+            <option value="">любой</option>
+            <option value="queued">в очереди</option>
+            <option value="running">выполняется</option>
+            <option value="succeeded">успешно</option>
+            <option value="failed">ошибка</option>
+            <option value="rolled_back">откат</option>
+          </select>
+        </label>
+
+        <label>
+          Автор
+          <input type="search" name="author" placeholder="например, anna.k" />
+        </label>
+
+        <div class="filters__actions">
+          <button type="submit">Обновить</button>
+          <button type="reset">Сбросить фильтры</button>
+        </div>
+      </form>
+
+      <section id="board" class="board" aria-live="polite"></section>
+    </main>
+
+    <script type="module" src="/board.js"></script>
+  </body>
+</html>

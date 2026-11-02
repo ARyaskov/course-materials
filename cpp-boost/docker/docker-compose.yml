@@ -1,0 +1,45 @@
+services:
+  rotad:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+    environment:
+      ROTA_LOG_LEVEL: info
+    volumes:
+      - rota-data:/rota/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: rota
+      MYSQL_DATABASE: rota
+      MYSQL_USER: rota
+      MYSQL_PASSWORD: rota
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-prota"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  rota-data:

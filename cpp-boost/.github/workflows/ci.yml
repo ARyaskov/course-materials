@@ -1,0 +1,9 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test with Boost 1.92 (Redis and MySQL enabled)
+        run: docker build --target build --file docker/Dockerfile .

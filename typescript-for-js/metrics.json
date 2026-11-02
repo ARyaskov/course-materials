@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-09-02T03:00:00.000Z",
+  "note": "Внешний файл метрик: приходит от системы мониторинга и не проверяется типами до разбора.",
+  "series": [
+    {
+      "label": "deploys/day",
+      "environment": "production",
+      "values": [3, 1, 4, 2, 5, 2, 1]
+    },
+    {
+      "label": "duration_p95_ms",
+      "environment": "production",
+      "values": [402000, 385000, 411000, 398000, 402000, 377000, 402000]
+    },
+    {
+      "label": "failure_rate",
+      "environment": "staging",
+      "values": [0, 0.25, 0.5, 0, 0.33, 0, 0]
+    }
+  ],
+  "totals": {
+    "deployments": 18,
+    "failures": 3,
+    "rollbacks": 1
+  }
+}

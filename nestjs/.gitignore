@@ -10,9 +10,10 @@ build
 
 # env
 .env
+.env.*
+!.env.example
 # .env.test is committed on purpose: tests must run out of the box.
 !.env.test
-.env.local
 *.local
 
 # logs

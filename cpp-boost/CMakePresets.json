@@ -1,0 +1,57 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "mingw",
+      "displayName": "MSYS2 MinGW64: GCC 16 + Boost 1.92 from pacman",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/mingw",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
+        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
+        "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/ninja.exe",
+        "CMAKE_PREFIX_PATH": "C:/msys64/mingw64",
+        "ROTA_STATIC_BOOST": "ON"
+      }
+    },
+    {
+      "name": "mingw-redis-mysql",
+      "inherits": "mingw",
+      "displayName": "MinGW64 + Boost.Redis + Boost.MySQL",
+      "binaryDir": "${sourceDir}/build/mingw-full",
+      "cacheVariables": { "ROTA_WITH_REDIS": "ON", "ROTA_WITH_MYSQL": "ON" }
+    },
+    {
+      "name": "linux",
+      "displayName": "Linux: system GCC/Clang, Boost from apt/vcpkg",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ROTA_STATIC_BOOST": "OFF"
+      }
+    },
+    {
+      "name": "vcpkg",
+      "displayName": "Any platform: Boost via vcpkg manifest",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/vcpkg",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "mingw", "configurePreset": "mingw" },
+    { "name": "mingw-redis-mysql", "configurePreset": "mingw-redis-mysql" },
+    { "name": "linux", "configurePreset": "linux" },
+    { "name": "vcpkg", "configurePreset": "vcpkg" }
+  ],
+  "testPresets": [
+    { "name": "mingw", "configurePreset": "mingw", "output": { "outputOnFailure": true } },
+    { "name": "mingw-redis-mysql", "configurePreset": "mingw-redis-mysql", "output": { "outputOnFailure": true } },
+    { "name": "linux", "configurePreset": "linux", "output": { "outputOnFailure": true } },
+    { "name": "vcpkg", "configurePreset": "vcpkg", "output": { "outputOnFailure": true } }
+  ]
+}
