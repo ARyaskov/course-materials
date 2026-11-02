@@ -1,1 +1,1 @@
-# stepik-course-materials
+# course-materials
