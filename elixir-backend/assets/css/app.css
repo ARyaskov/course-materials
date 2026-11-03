@@ -1,0 +1,22 @@
+@import "tailwindcss" source(none);
+
+@source "../js";
+@source "../../lib/klaxon_web";
+
+/* Индикатор потерянного соединения: без него страница выглядит живой,
+   когда сокет уже отвалился. */
+.phx-connected #connection-lost {
+  display: none;
+}
+
+#connection-lost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  text-align: center;
+  background: #b91c1c;
+  color: #fff;
+  font-size: 0.875rem;
+}

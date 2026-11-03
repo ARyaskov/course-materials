@@ -1,0 +1,70 @@
+# Стенд разработки и демонстрации.
+#
+#   docker compose up -d db          — только база, приложение запускается через mix
+#   docker compose --profile app up  — всё вместе, приложение из релиза
+#   docker compose --profile app --profile metrics up — плюс Prometheus на :9090
+
+x-app: &app-base
+  image: klaxon-course:local
+  build:
+    context: .
+  environment:
+    DATABASE_URL: ecto://postgres:postgres@db/klaxon_dev
+    SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+    WEBHOOK_SIGNING_KEY: ${WEBHOOK_SIGNING_KEY:-}
+    PHX_HOST: localhost
+    PORT: "4000"
+    PHX_SERVER: "true"
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: klaxon_dev
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    <<: *app-base
+    profiles: ["app"]
+    entrypoint: ["/app/bin/migrate"]
+    command: []
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    <<: *app-base
+    profiles: ["app"]
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/app/bin/klaxon", "rpc", "1 + 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    # SIGTERM доходит до релиза, дренаж соединений успевает отработать.
+    stop_grace_period: 30s
+
+  prometheus:
+    profiles: ["metrics"]
+    image: prom/prometheus:latest
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+volumes:
+  pgdata:

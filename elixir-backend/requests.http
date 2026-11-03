@@ -1,0 +1,122 @@
+### Примеры запросов к API Klaxon v1.
+### Подставьте ключ, выданный `mix setup`.
+
+@host = http://localhost:4000
+@token = klx_ЗАМЕНИТЕ_НА_СВОЙ_КЛЮЧ
+
+### Приём сигнала
+POST {{host}}/api/v1/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: 1f7d9b62-0d2e-4f1a-9a6c-2f3f9c5b1e77
+
+{
+  "service": "checkout-api",
+  "title": "5xx rate above 2%",
+  "priority": "p1",
+  "dedup_key": "checkout-api:5xx",
+  "payload": {"region": "eu-central", "value": 2.7}
+}
+
+### Повтор того же запроса — вернётся сохранённый ответ
+POST {{host}}/api/v1/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: 1f7d9b62-0d2e-4f1a-9a6c-2f3f9c5b1e77
+
+{
+  "service": "checkout-api",
+  "title": "5xx rate above 2%",
+  "priority": "p1",
+  "dedup_key": "checkout-api:5xx",
+  "payload": {"region": "eu-central", "value": 2.7}
+}
+
+### Сигнал о восстановлении — закрывает инцидент
+POST {{host}}/api/v1/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "service": "checkout-api",
+  "title": "5xx rate above 2%",
+  "dedup_key": "checkout-api:5xx",
+  "status": "resolved"
+}
+
+### Список инцидентов
+GET {{host}}/api/v1/incidents?status=open&limit=25
+Authorization: Bearer {{token}}
+
+### Следующая страница
+GET {{host}}/api/v1/incidents?limit=25&cursor=ВСТАВЬТЕ_next_cursor
+Authorization: Bearer {{token}}
+
+### Один инцидент
+GET {{host}}/api/v1/incidents/ВСТАВЬТЕ_ID
+Authorization: Bearer {{token}}
+
+### Таймлайн инцидента
+GET {{host}}/api/v1/incidents/ВСТАВЬТЕ_ID/timeline
+Authorization: Bearer {{token}}
+
+### Подтверждение
+POST {{host}}/api/v1/incidents/ВСТАВЬТЕ_ID/ack
+Authorization: Bearer {{token}}
+
+### Закрытие
+POST {{host}}/api/v1/incidents/ВСТАВЬТЕ_ID/resolve
+Authorization: Bearer {{token}}
+
+### Журнал исходящих доставок
+GET {{host}}/api/v1/webhook_deliveries?status=failed&limit=20
+Authorization: Bearer {{token}}
+
+### Спецификация OpenAPI — доступна без ключа
+GET {{host}}/api/v1/openapi
+
+### Отрицательные случаи: поведение при ошибках расходится с документацией
+### чаще, чем успешные ответы, поэтому они здесь наравне с ними.
+
+### Без ключа — ожидаем 401 и заголовок WWW-Authenticate
+GET {{host}}/api/v1/incidents
+
+### Тот же Idempotency-Key с другим телом — ожидаем 409 idempotency_conflict
+POST {{host}}/api/v1/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: 1f7d9b62-0d2e-4f1a-9a6c-2f3f9c5b1e77
+
+{"service": "checkout-api", "title": "совсем другое событие"}
+
+### Неизвестный статус в фильтре — ожидаем 422 invalid_payload
+GET {{host}}/api/v1/incidents?status=nope
+Authorization: Bearer {{token}}
+
+### limit выше максимума — ожидаем 422
+GET {{host}}/api/v1/incidents?limit=1000
+Authorization: Bearer {{token}}
+
+### Перевёрнутый диапазон дат — ожидаем 422
+GET {{host}}/api/v1/incidents?since=2026-09-04T00:00:00Z&until=2026-09-01T00:00:00Z
+Authorization: Bearer {{token}}
+
+### Неизвестный сервис — ожидаем 404
+POST {{host}}/api/v1/signals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"service": "нет-такого-сервиса", "title": "test"}
+
+### Повторное подтверждение закрытого инцидента — ожидаем 409 invalid_transition
+POST {{host}}/api/v1/incidents/ВСТАВЬТЕ_ID/ack
+Authorization: Bearer {{token}}
+
+### Проверки состояния
+GET {{host}}/healthz
+
+###
+GET {{host}}/readyz
+
+### Метрики Prometheus
+GET {{host}}/metrics

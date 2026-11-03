@@ -1,0 +1,68 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Версии берутся из .tool-versions — того же файла, что использует
+      # менеджер версий на машине разработчика.
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      # PLT кэшируется отдельно: он нужен только шагу dialyzer.
+      - uses: actions/cache@v4
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-plt-${{ hashFiles('**/mix.lock') }}
+
+      # --check-locked ловит ситуацию «обновил зависимость, забыл mix.lock».
+      - run: mix deps.get --check-locked
+
+      # format → compile --warnings-as-errors → credo --strict → test
+      - run: mix check
+
+      - run: mix sobelow --config --exit
+        continue-on-error: false
+
+      - run: mix dialyzer --format github
+
+      # Миграции проверяются в обе стороны: без этого миграция без `down`
+      # или необратимая операция обнаружились бы только при откате
+      # неудачного развёртывания.
+      - name: Миграции откатываются
+        run: |
+          mix ecto.drop --quiet
+          mix ecto.create --quiet
+          mix ecto.migrate --quiet
+          mix ecto.rollback --all --quiet
+          mix ecto.migrate --quiet
+
+      - run: mix coveralls

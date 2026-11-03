@@ -1,0 +1,31 @@
+/_build/
+# MIX_HOME/HEX_HOME при сборке в контейнере с примонтированным проектом
+/.mix/
+/.hex/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+/klaxon-*.tar
+
+# Секреты и локальное окружение
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.elixir_ls/
+.DS_Store
+Thumbs.db
+
+# Собранные ассеты и загруженные бинарники
+/priv/static/assets/
+/priv/static/cache_manifest.json
+/assets/node_modules/
+
+# PLT-файлы Dialyzer
+/priv/plts/

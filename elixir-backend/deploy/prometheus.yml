@@ -1,0 +1,12 @@
+# Конфигурация для стенда: docker compose --profile app --profile metrics up -d
+#
+# Интервал опроса меньше обычного: прогон нагрузки длится полминуты,
+# при 15 секундах точек на графике было бы всего две.
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: klaxon
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:4000"]
