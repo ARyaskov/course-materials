@@ -1,0 +1,45 @@
+# Результаты расчётов и кэш этапов
+results/
+*.jls
+logs/
+
+# Сборка документации
+docs/build/
+docs/Manifest.toml
+
+# Локальные окружения инструментов
+benchmark/Manifest.toml
+notebooks/Manifest.toml
+packaging/Manifest.toml
+
+# Системное
+.DS_Store
+*.cov
+*.mem
+
+# PackageCompiler, предкомпиляция и отчёты покрытия
+/build/
+*.so
+*.dylib
+*.dll
+*.o
+*.ji
+*.jls.tmp
+lcov.info
+coverage*.xml
+coverage*.json
+
+# Локальные окружения и секреты
+.julia/
+.julia_depot/
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+._*
+.idea/
+.vscode/

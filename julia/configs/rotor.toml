@@ -1,0 +1,52 @@
+# Прогон стенда: идентификация параметров ротора по записи прогиба
+# и оценка неопределённости пиковой амплитуды.
+
+[run]
+name = "rotor"
+seed = 20260901
+cache = true
+stages = ["data", "solution", "identification", "uq", "report"]
+
+[data]
+source = "synthetic"
+npoints = 80
+noise = 5.0e-7
+component = 1
+
+[model]
+kind = "rotor"
+
+[model.parameters]
+m = 12.0
+c = 45.0
+k = 1.8e6
+e = 2.0e-5
+"Ω" = 300.0
+
+[solver]
+rtol = 1.0e-9
+atol = 1.0e-12
+tspan = [0.0, 0.2]
+maxsteps = 2000000
+
+[identification]
+parameters = ["c", "k", "e"]
+method = "lm"
+multistart = 0
+
+[uq]
+method = "mc"
+nsamples = 2000
+quantiles = [0.05, 0.5, 0.95]
+sobol = true
+
+[output]
+dir = "results"
+figures = true
+report = true
+
+[output.tolerance]
+chi2 = 2.0
+stderr_pct = 10.0
+condition = 1.0e6
+spread_pct = 15.0

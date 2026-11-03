@@ -1,0 +1,38 @@
+# Эпидемиологический прогон: подбор β и γ по кривой инфицированных.
+# Та же машинерия, другая предметная модель — код стенда не меняется.
+
+[run]
+name = "sir"
+seed = 17
+stages = ["data", "solution", "identification", "report"]
+
+[data]
+source = "synthetic"
+npoints = 60
+noise = 800.0
+component = 2
+
+[model]
+kind = "sir"
+
+[model.parameters]
+"β" = 0.35
+"γ" = 0.1
+N = 1.0e6
+I0 = 10.0
+
+[solver]
+rtol = 1.0e-8
+atol = 1.0e-8
+tspan = [0.0, 160.0]
+
+[identification]
+parameters = ["β", "γ"]
+method = "lm"
+
+[output]
+dir = "results"
+
+[output.tolerance]
+chi2 = 3.0
+stderr_pct = 5.0

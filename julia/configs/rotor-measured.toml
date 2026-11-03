@@ -1,0 +1,43 @@
+# Прогон по записи измерений из data/rotor_run.csv.
+# Показывает разницу между синтетикой и реальным файлом: путь к данным
+# проверяется при разборе конфигурации, а не на середине расчёта.
+
+[run]
+name = "rotor-measured"
+seed = 4242
+stages = ["data", "identification", "uq", "report"]
+
+[data]
+source = "csv"
+path = "data/rotor_run.csv"
+component = 1
+
+[model]
+kind = "rotor"
+
+[model.parameters]
+"Ω" = 300.0
+
+[solver]
+rtol = 1.0e-9
+atol = 1.0e-12
+tspan = [0.0, 0.21]
+
+[identification]
+parameters = ["c", "k", "e"]
+method = "lm"
+multistart = 4
+
+[uq]
+method = "qmc"
+nsamples = 1500
+quantiles = [0.025, 0.5, 0.975]
+sobol = true
+
+[output]
+dir = "results"
+
+[output.tolerance]
+chi2 = 2.0
+stderr_pct = 12.0
+spread_pct = 20.0

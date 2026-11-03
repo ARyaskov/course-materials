@@ -1,0 +1,137 @@
+name: Julia CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: julia-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+defaults:
+  run:
+    working-directory: .
+    shell: bash
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} / ${{ matrix.os }} / ${{ matrix.threads }} threads
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    continue-on-error: ${{ matrix.version == 'nightly' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['1.12']
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        threads: ['1']
+        include:
+          - version: '1.12'
+            os: ubuntu-latest
+            threads: '4'
+          - version: 'nightly'
+            os: ubuntu-latest
+            threads: '1'
+    env:
+      JULIA_NUM_THREADS: ${{ matrix.threads }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - run: julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test(; julia_args=["--check-bounds=yes"])'
+
+  resolve:
+    name: Dependencies without lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+      - name: Resolve a fresh environment and test
+        run: |
+          julia --project=. -e '
+            using Pkg
+            rm("Manifest.toml"; force=true)
+            Pkg.instantiate()
+            Pkg.test()'
+
+  quality:
+    name: Aqua and JET
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+      - run: |
+          julia -e '
+            using Pkg
+            root = pwd()
+            Pkg.activate(; temp=true)
+            Pkg.develop(path=root)
+            Pkg.add(["Aqua", "JET"])
+            using Aqua, JET, Poincare
+            Aqua.test_all(Poincare; ambiguities=(; recursive=false))
+            rep = JET.report_package(Poincare; target_modules=(Poincare,))
+            isempty(JET.get_reports(rep)) || (show(rep); exit(1))'
+
+  format:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - run: |
+          julia -e '
+            using Pkg
+            Pkg.activate(; temp=true)
+            Pkg.add("JuliaFormatter")
+            using JuliaFormatter
+            format(".") || error("code is not formatted; run JuliaFormatter in project root")'
+
+  docs:
+    name: Documentation and doctests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+      - run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      - run: julia --project=docs docs/make.jl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: julia-docs
+          path: docs/build
+
+  version-tag:
+    name: Version matches Julia tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - run: |
+          julia -e '
+            using TOML
+            v = TOML.parsefile("Project.toml")["version"]
+            tag = replace(ENV["GITHUB_REF_NAME"], r"^v" => "")
+            v == tag || error("version = $v, tag = $tag")'

@@ -1,0 +1,6 @@
+style = "blue"
+margin = 92
+indent = 4
+always_for_in = true
+whitespace_in_kwargs = true
+format_docstrings = true
