@@ -1,0 +1,10 @@
+id,category,amount,status
+t-1001,groceries,42.50,completed
+t-1002,transport,,pending
+t-1003,salary,-100.00,failed
+t-1004,groceries,18.00,completed
+t-1005,entertainment,30.00,completed
+t-1006,transport,12.5,completed
+t-1007,groceries,7.25,pending
+t-1008,entertainment,55.00,completed
+t-1009,transport,9.99,abc

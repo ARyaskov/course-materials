@@ -1,0 +1,5 @@
+Категория       Кол-во        Сумма
+entertainment        2        85.00
+groceries            2        60.50
+transport            1        12.50
+ИТОГО                5       158.00

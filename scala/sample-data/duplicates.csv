@@ -1,0 +1,4 @@
+id,category,amount,status
+t-1,food,10,completed
+t-1,books,20,pending
+t-2,food,bad,completed

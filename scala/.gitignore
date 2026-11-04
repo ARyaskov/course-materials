@@ -1,0 +1,21 @@
+target/
+project/target/
+project/project/
+.bsp/
+.scala-build/
+.metals/
+.idea/
+*.class
+
+# Локальное окружение и секреты
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Создаваемые отчёты; sample-data/expected-*.txt остаются учебными примерами
+/report.txt
+/reports/
